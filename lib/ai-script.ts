@@ -338,7 +338,11 @@ const buildUserPrompt = (brief: string, spec: VideoSpec) => {
       availableAssets: assetSummary,
       uploadedImageGuidance:
         "If image inputs are attached, inspect them for product type, visible UI structure, dominant colors, content density, and credible feature evidence. Bind scene assetId values to uploaded asset ids when useful.",
-      designCatalog: getDesignPromptCatalog(),
+      designCatalog: getDesignPromptCatalog({
+        brief,
+        preferredId: spec.creative?.design?.id,
+        limit: 5,
+      }),
       userBrief: brief,
     },
     null,

@@ -169,11 +169,27 @@ export const getDesignPalette = (entry: DesignLibraryEntry): DesignPalette => {
   };
 };
 
-export const getDesignPromptCatalog = () =>
-  designLibrary.map((entry) => ({
+type DesignPromptCatalogOptions = {
+  brief?: string;
+  preferredId?: string;
+  limit?: number;
+};
+
+export const getDesignPromptCatalog = (options: DesignPromptCatalogOptions = {}) => {
+  const { brief, preferredId, limit = designLibrary.length } = options;
+  const preferred = getDesignById(preferredId);
+  const ranked = brief?.trim()
+    ? [...designLibrary].sort((a, b) => scoreDesign(b, brief) - scoreDesign(a, brief))
+    : designLibrary;
+  const selected = preferred
+    ? [preferred, ...ranked.filter((entry) => entry.id !== preferred.id)]
+    : ranked;
+
+  return selected.slice(0, Math.max(1, limit)).map((entry) => ({
     id: entry.id,
     name: entry.name,
     keywords: entry.keywords.slice(0, 10),
     colors: entry.colors.slice(0, 6),
     summary: entry.summary.slice(0, 220),
   }));
+};

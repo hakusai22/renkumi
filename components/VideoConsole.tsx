@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Player } from "@remotion/player";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { designLibrary, type DesignLibraryEntry } from "@/lib/design-library";
 import { LaunchCutVideo } from "@/remotion/LaunchCutVideo";
 import {
@@ -76,6 +76,9 @@ const sessionDraftKey = "launchcut.video-draft.v1";
 const latestRenderFallbackWindowMs = 24 * 60 * 60 * 1000;
 const allowedLocalImageTypes = new Set(["image/png", "image/jpeg", "image/webp", "image/svg+xml"]);
 const maxLocalImageBytes = 3 * 1024 * 1024;
+const maxVisionImageEdge = 1280;
+const compressedImageQuality = 0.78;
+const aiPlanTimeoutMs = 90 * 1000;
 
 type SessionDraft = {
   brief?: string;
@@ -83,6 +86,78 @@ type SessionDraft = {
   selectedDesignId?: string;
   generatedPlan?: GeneratedVideoPlan | null;
   latestRender?: RenderSnapshot | null;
+};
+
+const dataUrlByteSize = (dataUrl: string) => {
+  const base64 = dataUrl.split(",", 2)[1] ?? "";
+  return Math.ceil((base64.length * 3) / 4);
+};
+
+const loadImageFromDataUrl = (dataUrl: string) =>
+  new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new window.Image();
+    image.addEventListener("load", () => resolve(image));
+    image.addEventListener("error", () => reject(new Error("Failed to decode image.")));
+    image.src = dataUrl;
+  });
+
+const prepareLocalImage = async (file: File) => {
+  const originalDataUrl = await readFileAsDataUrl(file);
+
+  if (file.type === "image/svg+xml") {
+    return {
+      src: originalDataUrl,
+      mimeType: file.type,
+      size: file.size,
+    };
+  }
+
+  try {
+    const image = await loadImageFromDataUrl(originalDataUrl);
+    const scale = Math.min(1, maxVisionImageEdge / Math.max(image.naturalWidth, image.naturalHeight));
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      return {
+        src: originalDataUrl,
+        mimeType: file.type,
+        size: file.size,
+      };
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, width, height);
+    context.drawImage(image, 0, 0, width, height);
+
+    const mimeType = file.type === "image/webp" ? "image/webp" : "image/jpeg";
+    const compressedDataUrl = canvas.toDataURL(mimeType, compressedImageQuality);
+    const compressedSize = dataUrlByteSize(compressedDataUrl);
+
+    if (!compressedDataUrl || compressedSize >= file.size) {
+      return {
+        src: originalDataUrl,
+        mimeType: file.type,
+        size: file.size,
+      };
+    }
+
+    return {
+      src: compressedDataUrl,
+      mimeType,
+      size: compressedSize,
+    };
+  } catch {
+    return {
+      src: originalDataUrl,
+      mimeType: file.type,
+      size: file.size,
+    };
+  }
 };
 
 export function VideoConsole({ initialSpec }: VideoConsoleProps) {
@@ -99,6 +174,7 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
   const [latestRender, setLatestRender] = useState<RenderSnapshot | null>(null);
   const [selectedDesignId, setSelectedDesignId] = useState("");
   const [hasLoadedSessionDraft, setHasLoadedSessionDraft] = useState(false);
+  const hasManualPlanEditsRef = useRef(false);
 
   const spec = useMemo(() => {
     const baseSpec = initialSpec ?? defaultVideoSpec;
@@ -273,6 +349,7 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
   }, [assets, brief, generatedPlan, hasLoadedSessionDraft, latestRender, selectedDesignId]);
 
   const updateBrief = (value: string) => {
+    hasManualPlanEditsRef.current = false;
     setBrief(value);
     setGeneratedPlan(null);
     setLatestRender(null);
@@ -289,6 +366,7 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
       return;
     }
 
+    hasManualPlanEditsRef.current = false;
     setGeneratedPlan(null);
     setLatestRender(null);
     setWorkflowStep("input");
@@ -306,14 +384,15 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
 
       const extension = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1] || "png";
       const id = `shot-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
+      const prepared = await prepareLocalImage(file);
 
       return {
         id,
         type: "screenshot",
-        src: await readFileAsDataUrl(file),
+        src: prepared.src,
         alt: file.name || "Local product screenshot",
-        mimeType: file.type,
-        size: file.size,
+        mimeType: prepared.mimeType,
+        size: prepared.size,
         originalName: file.name || `${id}.${extension}`,
       } satisfies AssetSpec;
     };
@@ -321,7 +400,7 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
     try {
       const staged = await Promise.all(files.map(stageOne));
       setAssets((current) => [...staged, ...current]);
-      setUploadStatus(`已临时添加 ${staged.length} 张截图。图片没有上传，生成时会作为 base64 随请求发送。`);
+      setUploadStatus(`已临时添加 ${staged.length} 张截图。图片已在浏览器内压缩，生成时会作为 base64 随请求发送。`);
     } catch (error) {
       setUploadStatus(error instanceof Error ? error.message : "读取本地截图失败");
     }
@@ -342,27 +421,37 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
       return;
     }
 
-    setWorkflowStep("generating");
+    const fallbackSpec = initialSpec ?? defaultVideoSpec;
+    const localDraftSpec = buildSpecFromBrief(input, assets, fallbackSpec, selectedDesignId || undefined);
+    const localDraftPlan = planFromSpec(localDraftSpec);
+
+    hasManualPlanEditsRef.current = false;
+    setWorkflowStep("review");
     setIsGeneratingPlan(true);
-    setGeneratedPlan(null);
+    setGeneratedPlan(localDraftPlan);
     setLatestRender(null);
     setRenderStatus("");
     setScriptMessages([]);
     setScriptTokenCount(0);
-    setScriptStatus("准备根据描述和图片生成视频方案...");
-    pushScriptMessage("正在整理用户描述和本地素材...");
+    setScriptStatus("已先生成本地可编辑草稿，AI 正在读取图片并增强方案...");
+    pushScriptMessage("已生成本地可编辑草稿。");
+    pushScriptMessage("AI 正在读取图片并增强方案...");
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), aiPlanTimeoutMs);
 
     try {
       const response = await fetch("/api/script/optimize/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brief: input, spec }),
+        body: JSON.stringify({ brief: input, spec: localDraftSpec }),
+        signal: controller.signal,
       });
 
       if (!response.ok || !response.body) {
         const payload = await response.json().catch(() => ({}));
-        setScriptStatus(payload.error ?? "AI 视频方案生成失败");
-        setWorkflowStep("input");
+        setScriptStatus(`${payload.error ?? "AI 视频方案生成失败"}。已保留本地可编辑草稿。`);
+        setWorkflowStep("review");
         return;
       }
 
@@ -403,9 +492,11 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
 
           if (payload.skipped) {
             const fallbackPlan = planFromSpec(
-              buildSpecFromBrief(input, assets, initialSpec ?? defaultVideoSpec, selectedDesignId || undefined),
+              buildSpecFromBrief(input, assets, fallbackSpec, selectedDesignId || undefined),
             );
-            setGeneratedPlan(fallbackPlan);
+            if (!hasManualPlanEditsRef.current) {
+              setGeneratedPlan(fallbackPlan);
+            }
             setWorkflowStep("review");
             setScriptStatus(payload.message ?? "未配置可用文本模型，已使用本地动态方案。");
             pushScriptMessage("已生成可编辑方案。");
@@ -413,6 +504,12 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
           }
 
           if (payload.plan) {
+            if (hasManualPlanEditsRef.current) {
+              setScriptStatus(`AI 已使用 ${payload.provider} · ${payload.model} 返回方案；你已手动编辑，暂不自动覆盖当前草稿。`);
+              pushScriptMessage("AI 方案已返回；保留你的手动编辑。");
+              return;
+            }
+
             setGeneratedPlan(payload.plan);
             setWorkflowStep("review");
             setScriptStatus(`已使用 ${payload.provider} · ${payload.model} 生成 Remotion 视频方案`);
@@ -423,8 +520,8 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
 
         if (event === "error") {
           didReceiveResult = true;
-          setWorkflowStep("input");
-          setScriptStatus(payload.error ?? "AI 视频方案生成失败");
+          setWorkflowStep("review");
+          setScriptStatus(`${payload.error ?? "AI 视频方案生成失败"}。已保留本地可编辑草稿。`);
         }
       };
 
@@ -448,18 +545,26 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
       }
 
       if (!didReceiveResult) {
-        setWorkflowStep("input");
-        setScriptStatus("AI 响应结束，但没有返回可用视频方案。");
+        setWorkflowStep("review");
+        setScriptStatus("AI 响应结束，但没有返回可用视频方案。已保留本地可编辑草稿。");
       }
     } catch (error) {
-      setWorkflowStep("input");
-      setScriptStatus(error instanceof Error ? error.message : "AI 视频方案生成失败");
+      setWorkflowStep("review");
+      const message =
+        error instanceof DOMException && error.name === "AbortError"
+          ? "AI 响应超过 90 秒，已停止等待"
+          : error instanceof Error
+            ? error.message
+            : "AI 视频方案生成失败";
+      setScriptStatus(`${message}。已保留本地可编辑草稿。`);
     } finally {
+      window.clearTimeout(timeoutId);
       setIsGeneratingPlan(false);
     }
   };
 
   const updateScene = (index: number, patch: Partial<SceneSpec>) => {
+    hasManualPlanEditsRef.current = true;
     setGeneratedPlan((current) => {
       if (!current?.scenes) {
         return current;
@@ -473,6 +578,7 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
   };
 
   const updateDesign = (designId: string) => {
+    hasManualPlanEditsRef.current = true;
     setSelectedDesignId(designId);
     setGeneratedPlan((current) =>
       current
@@ -665,8 +771,18 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
                   <p className="eyebrow">Review</p>
                   <h2>确认视频方案</h2>
                 </div>
-                <span className="pill">{selectedDesign ? `${selectedDesign.name} 风格` : "自动风格"}</span>
+                <span className="pill">
+                  {isGeneratingPlan
+                    ? scriptTokenCount > 0
+                      ? `AI 已接收 ${scriptTokenCount} 字`
+                      : "AI 优化中"
+                    : selectedDesign
+                      ? `${selectedDesign.name} 风格`
+                      : "自动风格"}
+                </span>
               </div>
+
+              {scriptStatus ? <div className="status-box">{scriptStatus}</div> : null}
 
               <div className="field">
                 <label>设计风格</label>
