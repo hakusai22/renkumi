@@ -215,6 +215,13 @@ a {
   opacity: 0.64;
 }
 
+.mini-button {
+  min-height: 36px;
+  padding: 8px 12px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
 .page-wrap {
   max-width: 1280px;
   margin: 0 auto;
@@ -1020,6 +1027,17 @@ a {
   border: 1px solid var(--line);
   border-radius: 14px;
   background: white;
+}
+
+.asset-row-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.asset-row-content .muted {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .asset-thumb {
