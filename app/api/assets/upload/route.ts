@@ -46,6 +46,9 @@ export async function POST(request: Request) {
       type: "screenshot",
       src: `/assets/uploads/${filename}`,
       alt: file.name || "Uploaded product screenshot",
+      mimeType: file.type,
+      size: file.size,
+      originalName: file.name || filename,
     },
   });
 }

@@ -69,6 +69,9 @@ export type AssetSpec = {
   type: "generated" | "screenshot" | "background" | "video";
   src: string;
   alt: string;
+  mimeType?: string;
+  size?: number;
+  originalName?: string;
 };
 
 export type OutputSpec = {

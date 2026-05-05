@@ -1,3 +1,5 @@
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import OpenAI from "openai";
 import { z } from "zod";
 import { getDesignPromptCatalog } from "./design-library";
@@ -15,6 +17,7 @@ import {
   transitionPresets,
   visualTreatments,
   type SceneKind,
+  type AssetSpec,
   type VideoSpec,
 } from "./video-spec";
 import type { GeneratedVideoPlan } from "./video-script";
@@ -34,6 +37,11 @@ type GenerateCreativeVideoPlanInput = {
 type GenerateCreativeVideoPlanStreamInput = GenerateCreativeVideoPlanInput & {
   onStatus?: (message: string) => void;
   onToken?: (token: string) => void;
+};
+
+type VisionInput = {
+  asset: AssetSpec;
+  dataUrl: string;
 };
 
 type GenerateCreativeVideoPlanResult =
@@ -131,6 +139,69 @@ const getTextModelConfig = (): AiModelConfig | null => {
   return candidates.find(Boolean) ?? null;
 };
 
+const getVisionModelConfig = (): AiModelConfig | null => {
+  const candidates: Array<AiModelConfig | null> = [
+    process.env.OPENAI_API_KEY
+      ? {
+          provider: "OpenAI",
+          apiKey: process.env.OPENAI_API_KEY,
+          baseURL: process.env.OPENAI_BASE_URL || undefined,
+          model:
+            process.env.OPENAI_VISION_MODEL ||
+            process.env.OPENAI_TEXT_MODEL ||
+            process.env.OPENAI_MODEL ||
+            "gpt-4.1-mini",
+        }
+      : null,
+    process.env.DASHSCOPE_API_KEY && process.env.DASHSCOPE_VISION_MODEL
+      ? {
+          provider: "DashScope",
+          apiKey: process.env.DASHSCOPE_API_KEY,
+          baseURL: process.env.DASHSCOPE_BASE_URL || "https://dashscope.aliyuncs.com/compatible-mode/v1",
+          model: process.env.DASHSCOPE_VISION_MODEL,
+        }
+      : null,
+  ];
+
+  return candidates.find(Boolean) ?? null;
+};
+
+const isVisionAsset = (asset: AssetSpec) =>
+  asset.type === "screenshot" &&
+  asset.src.startsWith("/assets/uploads/") &&
+  asset.mimeType !== "image/svg+xml" &&
+  /\.(png|jpe?g|webp)$/i.test(asset.src);
+
+const loadVisionInputs = async (assets: AssetSpec[], onStatus?: (message: string) => void): Promise<VisionInput[]> => {
+  const maxVisionBytes = 6 * 1024 * 1024;
+  const candidates = assets.filter(isVisionAsset).slice(0, 4);
+  const inputs: VisionInput[] = [];
+
+  if (candidates.length > 0) {
+    onStatus?.(`正在读取 ${candidates.length} 张上传图片...`);
+  }
+
+  for (const asset of candidates) {
+    const relativePath = asset.src.replace(/^\/+/, "");
+    const filePath = path.join(process.cwd(), "public", relativePath);
+    const stat = await fs.stat(filePath).catch(() => null);
+
+    if (!stat || stat.size > maxVisionBytes) {
+      onStatus?.(`${asset.originalName ?? asset.alt} 太大或无法读取，已作为素材保留但跳过识图。`);
+      continue;
+    }
+
+    const bytes = await fs.readFile(filePath);
+    const mimeType = asset.mimeType || (asset.src.endsWith(".webp") ? "image/webp" : "image/png");
+    inputs.push({
+      asset,
+      dataUrl: `data:${mimeType};base64,${bytes.toString("base64")}`,
+    });
+  }
+
+  return inputs;
+};
+
 const extractJson = (content: string) => {
   const fenced = content.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
   const source = fenced ?? content;
@@ -212,12 +283,42 @@ const buildUserPrompt = (brief: string, spec: VideoSpec) => {
       currentCreative: spec.creative,
       currentScenes: sceneSummary,
       availableAssets: assetSummary,
+      uploadedImageGuidance:
+        "If image inputs are attached, inspect them for product type, visible UI structure, dominant colors, content density, and credible feature evidence. Bind scene assetId values to uploaded asset ids when useful.",
       designCatalog: getDesignPromptCatalog(),
       userBrief: brief,
     },
     null,
     2,
   );
+};
+
+const buildMessages = (brief: string, spec: VideoSpec, visionInputs: VisionInput[]) => {
+  const prompt = buildUserPrompt(brief, spec);
+
+  if (visionInputs.length === 0) {
+    return [
+      { role: "system" as const, content: buildSystemPrompt(spec) },
+      { role: "user" as const, content: prompt },
+    ];
+  }
+
+  return [
+    { role: "system" as const, content: buildSystemPrompt(spec) },
+    {
+      role: "user" as const,
+      content: [
+        { type: "text", text: `${prompt}\n\n下面附带用户上传的产品截图，请先识别图片内容，再生成方案。` },
+        ...visionInputs.map((input) => ({
+          type: "image_url",
+          image_url: {
+            url: input.dataUrl,
+            detail: "low",
+          },
+        })),
+      ],
+    },
+  ];
 };
 
 const parseGeneratedVideoPlan = (content: string): GeneratedVideoPlan => {
@@ -237,7 +338,8 @@ export const generateCreativeVideoPlan = async ({
   brief,
   spec = defaultVideoSpec,
 }: GenerateCreativeVideoPlanInput): Promise<GenerateCreativeVideoPlanResult> => {
-  const config = getTextModelConfig();
+  const visionInputs = await loadVisionInputs(spec.assets);
+  const config = visionInputs.length > 0 ? getVisionModelConfig() ?? getTextModelConfig() : getTextModelConfig();
 
   if (!config) {
     return {
@@ -254,10 +356,7 @@ export const generateCreativeVideoPlan = async ({
 
   const completion = await client.chat.completions.create({
     model: config.model,
-    messages: [
-      { role: "system", content: buildSystemPrompt(spec) },
-      { role: "user", content: buildUserPrompt(brief, spec) },
-    ],
+    messages: buildMessages(brief, spec, visionInputs) as Parameters<typeof client.chat.completions.create>[0]["messages"],
     temperature: 0.4,
   });
   const content = completion.choices[0]?.message?.content;
@@ -280,7 +379,9 @@ export const generateCreativeVideoPlanStream = async ({
   onStatus,
   onToken,
 }: GenerateCreativeVideoPlanStreamInput): Promise<GenerateCreativeVideoPlanResult> => {
-  const config = getTextModelConfig();
+  const visionInputs = await loadVisionInputs(spec.assets, onStatus);
+  const visionConfig = visionInputs.length > 0 ? getVisionModelConfig() : null;
+  const config = visionConfig ?? getTextModelConfig();
 
   if (!config) {
     return {
@@ -288,6 +389,12 @@ export const generateCreativeVideoPlanStream = async ({
       reason: "No compatible text model is configured.",
       message: "未在 .env 中配置可用的文本模型 Key，已使用本地规则生成动态视频方案。",
     };
+  }
+
+  if (visionInputs.length > 0 && visionConfig) {
+    onStatus?.(`正在识别 ${visionInputs.length} 张图片，并结合用户描述生成方案...`);
+  } else if (spec.assets.some(isVisionAsset)) {
+    onStatus?.("未配置可用视觉模型，仅基于描述和素材名生成方案。");
   }
 
   const client = new OpenAI({
@@ -299,16 +406,15 @@ export const generateCreativeVideoPlanStream = async ({
 
   const stream = await client.chat.completions.create({
     model: config.model,
-    messages: [
-      { role: "system", content: buildSystemPrompt(spec) },
-      { role: "user", content: buildUserPrompt(brief, spec) },
-    ],
+    messages: buildMessages(brief, spec, visionConfig ? visionInputs : []) as Parameters<
+      typeof client.chat.completions.create
+    >[0]["messages"],
     temperature: 0.4,
     stream: true,
   });
   let content = "";
 
-  onStatus?.("AI 正在构思镜头、风格和动效...");
+  onStatus?.("AI 正在选择设计风格、拆分镜头和规划动效...");
 
   for await (const chunk of stream) {
     const token = chunk.choices[0]?.delta?.content ?? "";

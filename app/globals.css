@@ -153,6 +153,31 @@ a {
   gap: 12px;
 }
 
+.workflow-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workflow-step {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 12px;
+  color: var(--muted);
+  background: var(--paper);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.workflow-step.active {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--surface-soft);
+}
+
 .button {
   border: 0;
   border-radius: 8px;
@@ -257,6 +282,23 @@ a {
   grid-template-columns: minmax(560px, 1fr) minmax(360px, 0.48fr);
   align-items: start;
   gap: 32px;
+}
+
+.review-workspace {
+  display: grid;
+  grid-template-columns: minmax(420px, 0.86fr) minmax(560px, 1.14fr);
+  align-items: start;
+  gap: 32px;
+}
+
+.review-editor {
+  display: grid;
+  gap: 18px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 24px;
+  background: var(--paper);
+  box-shadow: var(--shadow-airbnb);
 }
 
 .side-stack {
@@ -628,6 +670,28 @@ a {
   line-height: 1.55;
 }
 
+.stream-preview.large {
+  max-height: 260px;
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  padding: 16px;
+  background: white;
+}
+
+.stream-timeline {
+  display: grid;
+  gap: 10px;
+}
+
+.stream-step {
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: var(--surface-soft);
+  color: var(--body);
+  font-size: 14px;
+}
+
 .optional-note {
   border: 1px solid var(--line-soft);
   border-radius: 14px;
@@ -729,6 +793,10 @@ a {
     grid-template-columns: 1fr;
   }
 
+  .review-workspace {
+    grid-template-columns: 1fr;
+  }
+
   .preview-column {
     position: static;
   }
@@ -749,6 +817,7 @@ a {
   }
 
   .nav-actions,
+  .workflow-steps,
   .grid-2,
   .product-tabs,
   .search-pill,
