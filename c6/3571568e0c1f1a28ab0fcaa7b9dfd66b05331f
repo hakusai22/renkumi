@@ -1,0 +1,12 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "c63571568e0c1f1a28ab0fcaa7b9dfd66b05331f",
+  "prompts": {},
+  "humans": {
+    "h_b66a84423f1ea4": {
+      "author": "yinpeng"
+    }
+  }
+}
