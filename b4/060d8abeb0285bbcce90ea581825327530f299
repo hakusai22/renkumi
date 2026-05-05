@@ -1,0 +1,86 @@
+lib/video-spec.ts
+  eba857f49d10bd08 233-235,237,242
+components/VideoConsole.tsx
+  ffc6509beb63853c 6-7,65-72,85-86,92,95-96,104-138,158,168,171-172,174-180,258-260,329-340,466-467,543,552-553,695-755
+app/globals.css
+  ffc6509beb63853c 311,321-411
+tsconfig.tsbuildinfo
+  ffc6509beb63853c 1
+lib/video-script.ts
+  ffc6509beb63853c 153,159,304,316
+lib/render-launchcut-video.ts
+  eba857f49d10bd08 11-38,58,61,87
+remotion/LaunchCutVideo.tsx
+  eba857f49d10bd08 4,16,77-90,113,171,173-177,181-185,468-503,623
+app/api/assets/upload/route.ts
+  ffc6509beb63853c 33
+.omx/logs/omx-2026-05-05.jsonl
+  aea21b6632913df6 15-16
+  ffc6509beb63853c 13-14
+.omx/state/session.json
+  aea21b6632913df6 2-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "b4060d8abeb0285bbcce90ea581825327530f299",
+  "prompts": {
+    "36043c46edd59335": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019df876-8952-7b12-a57d-7a88e36ec34d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 3,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "aea21b6632913df6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019df8d5-fe91-7861-b64b-394bd144d4f0",
+        "model": "unknown"
+      },
+      "human_author": "hakusai",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 3,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    },
+    "eba857f49d10bd08": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019df8d5-76f2-7ae0-b7fc-05a503f4ba10",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai",
+      "messages": [],
+      "total_additions": 101,
+      "total_deletions": 46,
+      "accepted_lines": 101,
+      "overriden_lines": 0
+    },
+    "ffc6509beb63853c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019df8cb-cbe2-7fb1-8231-15a17f667dbe",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai",
+      "messages": [],
+      "total_additions": 252,
+      "total_deletions": 31,
+      "accepted_lines": 247,
+      "overriden_lines": 0
+    }
+  },
+  "humans": {
+    "h_b4d8471e2ec6a0": {
+      "author": "hakusai"
+    }
+  }
+}
