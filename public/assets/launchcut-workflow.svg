@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="LaunchCut workflow screenshot">
+  <rect width="1200" height="800" fill="#f7f4ec"/>
+  <rect x="78" y="74" width="1044" height="652" rx="28" fill="#fff"/>
+  <rect x="78" y="74" width="220" height="652" rx="28" fill="#103d4a"/>
+  <text x="128" y="156" font-family="Arial" font-size="42" font-weight="700" fill="#fff">LaunchCut</text>
+  <rect x="128" y="220" width="116" height="16" rx="8" fill="#f4c95d"/>
+  <rect x="128" y="268" width="110" height="16" rx="8" fill="#fff" opacity=".55"/>
+  <rect x="128" y="316" width="132" height="16" rx="8" fill="#fff" opacity=".35"/>
+  <rect x="360" y="132" width="260" height="140" rx="18" fill="#eaf4f1"/>
+  <rect x="670" y="132" width="330" height="140" rx="18" fill="#fef6dc"/>
+  <rect x="360" y="326" width="640" height="84" rx="18" fill="#f4f8f7"/>
+  <rect x="360" y="452" width="640" height="84" rx="18" fill="#f4f8f7"/>
+  <rect x="360" y="578" width="400" height="84" rx="18" fill="#f4f8f7"/>
+  <circle cx="406" cy="368" r="18" fill="#e65a4f"/>
+  <circle cx="406" cy="494" r="18" fill="#f4c95d"/>
+  <circle cx="406" cy="620" r="18" fill="#103d4a"/>
+  <rect x="448" y="348" width="312" height="18" rx="9" fill="#103d4a" opacity=".82"/>
+  <rect x="448" y="386" width="450" height="14" rx="7" fill="#638087" opacity=".42"/>
+  <rect x="448" y="474" width="360" height="18" rx="9" fill="#103d4a" opacity=".82"/>
+  <rect x="448" y="512" width="500" height="14" rx="7" fill="#638087" opacity=".42"/>
+  <rect x="448" y="600" width="294" height="18" rx="9" fill="#103d4a" opacity=".82"/>
+  <rect x="448" y="638" width="420" height="14" rx="7" fill="#638087" opacity=".42"/>
+</svg>

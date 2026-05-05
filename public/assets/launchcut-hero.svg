@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="LaunchCut campaign workspace">
+  <rect width="1200" height="800" fill="#eaf4f1"/>
+  <circle cx="240" cy="176" r="126" fill="#f4c95d" opacity=".72"/>
+  <circle cx="1004" cy="632" r="190" fill="#e65a4f" opacity=".18"/>
+  <rect x="130" y="120" width="940" height="560" rx="28" fill="#fff" filter="url(#shadow)"/>
+  <rect x="130" y="120" width="940" height="70" rx="28" fill="#103d4a"/>
+  <circle cx="180" cy="155" r="12" fill="#e65a4f"/>
+  <circle cx="218" cy="155" r="12" fill="#f4c95d"/>
+  <circle cx="256" cy="155" r="12" fill="#dcebe8"/>
+  <rect x="190" y="250" width="320" height="48" rx="10" fill="#103d4a"/>
+  <rect x="190" y="324" width="420" height="22" rx="11" fill="#638087" opacity=".55"/>
+  <rect x="190" y="370" width="360" height="22" rx="11" fill="#638087" opacity=".35"/>
+  <rect x="190" y="456" width="170" height="56" rx="12" fill="#e65a4f"/>
+  <rect x="640" y="246" width="300" height="300" rx="30" fill="#f7f4ec"/>
+  <path d="M706 474c68-142 128-190 214-152-30 12-54 34-70 72-26 61-78 92-144 80Z" fill="#103d4a"/>
+  <path d="M690 356c78-16 142 0 192 50-72-16-132-4-180 36-26 21-52-80-12-86Z" fill="#f4c95d"/>
+  <defs>
+    <filter id="shadow" x="70" y="80" width="1060" height="680" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="28" stdDeviation="32" flood-color="#103d4a" flood-opacity=".16"/>
+    </filter>
+  </defs>
+</svg>

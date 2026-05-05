@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="LaunchCut results dashboard">
+  <rect width="1200" height="800" fill="#eaf4f1"/>
+  <rect x="110" y="96" width="980" height="608" rx="30" fill="#fff"/>
+  <text x="166" y="170" font-family="Arial" font-size="38" font-weight="700" fill="#103d4a">Campaign outputs</text>
+  <rect x="166" y="220" width="250" height="190" rx="22" fill="#103d4a"/>
+  <rect x="476" y="220" width="250" height="190" rx="22" fill="#f4c95d"/>
+  <rect x="786" y="220" width="250" height="190" rx="22" fill="#e65a4f"/>
+  <text x="208" y="306" font-family="Arial" font-size="58" font-weight="700" fill="#fff">16:9</text>
+  <text x="520" y="306" font-family="Arial" font-size="58" font-weight="700" fill="#103d4a">9:16</text>
+  <text x="830" y="306" font-family="Arial" font-size="58" font-weight="700" fill="#fff">API</text>
+  <rect x="166" y="476" width="870" height="34" rx="17" fill="#dcebe8"/>
+  <rect x="166" y="476" width="690" height="34" rx="17" fill="#103d4a"/>
+  <rect x="166" y="548" width="870" height="34" rx="17" fill="#dcebe8"/>
+  <rect x="166" y="548" width="520" height="34" rx="17" fill="#e65a4f"/>
+  <rect x="166" y="620" width="870" height="34" rx="17" fill="#dcebe8"/>
+  <rect x="166" y="620" width="780" height="34" rx="17" fill="#f4c95d"/>
+</svg>

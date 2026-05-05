@@ -1,0 +1,36 @@
+{
+  "name": "launchcut",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "design:sync": "tsx scripts/sync-design-library.ts",
+    "remotion:studio": "remotion studio remotion/index.ts",
+    "remotion:render": "tsx scripts/render-worker.ts",
+    "render:sample": "tsx scripts/render-worker.ts sample"
+  },
+  "dependencies": {
+    "@remotion/bundler": "^4.0.370",
+    "@remotion/player": "^4.0.370",
+    "@remotion/renderer": "^4.0.370",
+    "next": "^15.0.0",
+    "openai": "^5.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.370",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}

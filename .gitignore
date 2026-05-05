@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+dist
+.DS_Store
+.env
+.env*.local
+public/renders/*
+public/assets/generated/*
+public/assets/uploads/*
+!.gitkeep
+/.env.example
