@@ -1,0 +1,38 @@
+app/api/assets/upload/route.ts
+  36043c46edd59335 49-51
+tsconfig.tsbuildinfo
+  36043c46edd59335 1
+components/VideoConsole.tsx
+  36043c46edd59335 7,13,16,22-23,52-64,66,71,73,77,91,96,98,108-109,134-141,149-154,156-157,169,193-195,203,212-216,222,224,231,256,260,263,267-290,300,302-303,308-314,326,358,362-372,384-386,389-399,401-420,423-433,435,437-444,446,448-450,453-454,456,459-467,469-480,482-513,518-534,536-545,547-568,570,572-576,581-608
+app/globals.css
+  36043c46edd59335 156-180,287-303,673-694,796-799,820
+lib/ai-script.ts
+  36043c46edd59335 1-2,20,42-46,142-204,286-287,296-323,341-342,359,382-384,394-399,409-411,417
+lib/video-spec.ts
+  36043c46edd59335 72-74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "20122dec5928a1d858e35f830b07ee3c08613e1f",
+  "prompts": {
+    "36043c46edd59335": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019df876-8952-7b12-a57d-7a88e36ec34d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "yinpeng",
+      "messages": [],
+      "total_additions": 499,
+      "total_deletions": 180,
+      "accepted_lines": 509,
+      "overriden_lines": 0
+    }
+  },
+  "humans": {
+    "h_b66a84423f1ea4": {
+      "author": "yinpeng"
+    }
+  }
+}
