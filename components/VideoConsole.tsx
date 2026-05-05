@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Player } from "@remotion/player";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { designLibrary, type DesignLibraryEntry } from "@/lib/design-library";
 import { LaunchCutVideo } from "@/remotion/LaunchCutVideo";
 import {
@@ -36,6 +36,8 @@ type RenderSnapshot = {
   pageUrl?: string;
   outputUrl?: string;
   error?: string;
+  updatedAt?: string;
+  spec?: VideoSpec;
   progress: RenderProgress;
 };
 
@@ -63,11 +65,14 @@ const planFromSpec = (spec: VideoSpec): GeneratedVideoPlan => ({
 });
 
 const sessionDraftKey = "launchcut.video-draft.v1";
+const latestRenderFallbackWindowMs = 24 * 60 * 60 * 1000;
 
 type SessionDraft = {
   brief?: string;
   assets?: AssetSpec[];
   selectedDesignId?: string;
+  generatedPlan?: GeneratedVideoPlan | null;
+  latestRender?: RenderSnapshot | null;
 };
 
 export function VideoConsole({ initialSpec }: VideoConsoleProps) {
@@ -100,13 +105,88 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
   const selectedDesign = spec.creative?.design;
   const canReview = Boolean(generatedPlan?.scenes?.length);
   const latestScriptMessage = scriptMessages[scriptMessages.length - 1] ?? scriptStatus ?? "正在准备视频方案...";
+  const isActiveRender = useCallback((status?: string) => status === "queued" || status === "rendering", []);
+  const isRecentRender = useCallback(
+    (task: RenderSnapshot) => !task.updatedAt || Date.now() - new Date(task.updatedAt).getTime() < latestRenderFallbackWindowMs,
+    [],
+  );
+
+  const getUserAssetsFromSpec = useCallback((taskSpec: VideoSpec) => {
+    const baseAssets = new Set((initialSpec ?? defaultVideoSpec).assets.map((asset) => `${asset.id}:${asset.src}`));
+    return taskSpec.assets.filter((asset) => !baseAssets.has(`${asset.id}:${asset.src}`));
+  }, [initialSpec]);
+
+  const hydrateRenderSpec = useCallback((task: RenderSnapshot) => {
+    if (!task.spec) {
+      return;
+    }
+
+    setGeneratedPlan(planFromSpec(task.spec));
+    setAssets(getUserAssetsFromSpec(task.spec));
+    setSelectedDesignId(task.spec.creative?.design?.id ?? "");
+  }, [getUserAssetsFromSpec]);
+
+  const applyRenderSnapshot = useCallback((task: RenderSnapshot, options: { syncSpec?: boolean } = {}) => {
+    setLatestRender(task);
+    setRenderStatus(task.progress?.message ?? task.status);
+
+    if (options.syncSpec) {
+      hydrateRenderSpec(task);
+    }
+
+    setWorkflowStep(isActiveRender(task.status) ? "rendering" : "result");
+  }, [hydrateRenderSpec, isActiveRender]);
+
+  const pollRender = useCallback((id: string) => {
+    window.setTimeout(async () => {
+      const response = await fetch(`/api/render/status?id=${id}`).catch(() => null);
+
+      if (!response?.ok) {
+        setRenderStatus("暂时无法获取渲染状态，稍后自动重试...");
+        pollRender(id);
+        return;
+      }
+
+      const task = (await response.json()) as RenderSnapshot;
+      applyRenderSnapshot(task);
+
+      if (isActiveRender(task.status)) {
+        pollRender(id);
+      }
+    }, 1000);
+  }, [applyRenderSnapshot, isActiveRender]);
 
   useEffect(() => {
-    const cached = window.sessionStorage.getItem(sessionDraftKey);
+    let isMounted = true;
+    const cached = window.localStorage.getItem(sessionDraftKey) ?? window.sessionStorage.getItem(sessionDraftKey);
+
+    const restoreRender = async (id?: string, fallbackUrl = "/api/render/latest") => {
+      const url = id ? `/api/render/status?id=${id}` : fallbackUrl;
+      const response = await fetch(url).catch(() => null);
+
+      if (!response?.ok) {
+        return;
+      }
+
+      const task = (await response.json()) as RenderSnapshot;
+
+      if (!isMounted || !isRecentRender(task)) {
+        return;
+      }
+
+      applyRenderSnapshot(task, { syncSpec: true });
+
+      if (isActiveRender(task.status)) {
+        pollRender(task.id);
+      }
+    };
 
     if (!cached) {
       setHasLoadedSessionDraft(true);
-      return;
+      void restoreRender();
+      return () => {
+        isMounted = false;
+      };
     }
 
     try {
@@ -114,35 +194,58 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
       setBrief(draft.brief ?? "");
       setAssets(Array.isArray(draft.assets) ? draft.assets : []);
       setSelectedDesignId(draft.selectedDesignId ?? "");
+      setGeneratedPlan(draft.generatedPlan ?? null);
+
+      if (draft.latestRender?.id) {
+        setLatestRender(draft.latestRender);
+        setRenderStatus(draft.latestRender.progress?.message ?? draft.latestRender.status);
+        setWorkflowStep(isActiveRender(draft.latestRender.status) ? "rendering" : "result");
+        void restoreRender(draft.latestRender.id);
+      } else if (draft.generatedPlan?.scenes?.length) {
+        setWorkflowStep("review");
+        void restoreRender();
+      } else {
+        void restoreRender();
+      }
     } catch {
       window.sessionStorage.removeItem(sessionDraftKey);
+      window.localStorage.removeItem(sessionDraftKey);
+      void restoreRender();
     } finally {
       setHasLoadedSessionDraft(true);
     }
-  }, []);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [applyRenderSnapshot, isActiveRender, isRecentRender, pollRender]);
 
   useEffect(() => {
     if (!hasLoadedSessionDraft) {
       return;
     }
 
-    window.sessionStorage.setItem(
-      sessionDraftKey,
-      JSON.stringify({
-        brief,
-        assets,
-        selectedDesignId,
-      } satisfies SessionDraft),
-    );
-  }, [assets, brief, hasLoadedSessionDraft, selectedDesignId]);
+    const draft = JSON.stringify({
+      brief,
+      assets,
+      selectedDesignId,
+      generatedPlan,
+      latestRender,
+    } satisfies SessionDraft);
+
+    window.sessionStorage.setItem(sessionDraftKey, draft);
+    window.localStorage.setItem(sessionDraftKey, draft);
+  }, [assets, brief, generatedPlan, hasLoadedSessionDraft, latestRender, selectedDesignId]);
 
   const updateBrief = (value: string) => {
     setBrief(value);
     setGeneratedPlan(null);
+    setLatestRender(null);
     setWorkflowStep("input");
     setScriptStatus("");
     setScriptMessages([]);
     setScriptTokenCount(0);
+    setRenderStatus("");
   };
 
   const uploadScreenshots = async (fileList: FileList | null) => {
@@ -152,7 +255,9 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
     }
 
     setGeneratedPlan(null);
+    setLatestRender(null);
     setWorkflowStep("input");
+    setRenderStatus("");
     setUploadStatus(`上传 ${files.length} 张截图中...`);
 
     const uploadOne = async (file: File) => {
@@ -338,22 +443,6 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
           }
         : current,
     );
-  };
-
-  const pollRender = (id: string) => {
-    window.setTimeout(async () => {
-      const response = await fetch(`/api/render/status?id=${id}`);
-      const task = (await response.json()) as RenderSnapshot;
-      setLatestRender((current) => ({ ...current, ...task }));
-      setRenderStatus(task.progress?.message ?? task.status);
-
-      if (task.status === "queued" || task.status === "rendering") {
-        pollRender(id);
-        return;
-      }
-
-      setWorkflowStep("result");
-    }, 1000);
   };
 
   const submitRender = async () => {

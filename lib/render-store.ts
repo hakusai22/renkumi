@@ -84,6 +84,37 @@ export async function readRenderTask(id: string): Promise<RenderTask | null> {
   return null;
 }
 
+export async function listRenderTasks(): Promise<RenderTask[]> {
+  const entries = await fs.readdir(renderRoot, { withFileTypes: true }).catch((error) => {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return [];
+    }
+
+    throw error;
+  });
+
+  const tasks = await Promise.all(
+    entries
+      .filter((entry) => entry.isDirectory())
+      .map(async (entry) => {
+        try {
+          return await readRenderTask(entry.name);
+        } catch {
+          return null;
+        }
+      }),
+  );
+
+  return tasks
+    .filter((task): task is RenderTask => Boolean(task))
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+}
+
+export async function readLatestRenderTask(): Promise<RenderTask | null> {
+  const [latestTask] = await listRenderTasks();
+  return latestTask ?? null;
+}
+
 export async function writeRenderTask(task: RenderTask) {
   const taskPath = getRenderTaskPath(task.id);
   const taskDir = path.dirname(taskPath);
