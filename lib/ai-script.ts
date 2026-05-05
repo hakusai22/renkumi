@@ -203,9 +203,9 @@ const getVisionModelConfig = (): AiModelConfig | null => {
 
 const isVisionAsset = (asset: AssetSpec) =>
   asset.type === "screenshot" &&
-  asset.src.startsWith("/assets/uploads/") &&
+  (asset.src.startsWith("/assets/uploads/") || asset.src.startsWith("data:image/")) &&
   asset.mimeType !== "image/svg+xml" &&
-  /\.(png|jpe?g|webp)$/i.test(asset.src);
+  (asset.src.startsWith("data:image/") || /\.(png|jpe?g|webp)$/i.test(asset.src));
 
 const loadVisionInputs = async (assets: AssetSpec[], onStatus?: (message: string) => void): Promise<VisionInput[]> => {
   const maxVisionBytes = 6 * 1024 * 1024;
@@ -213,10 +213,26 @@ const loadVisionInputs = async (assets: AssetSpec[], onStatus?: (message: string
   const inputs: VisionInput[] = [];
 
   if (candidates.length > 0) {
-    onStatus?.(`正在读取 ${candidates.length} 张上传图片...`);
+    onStatus?.(`正在读取 ${candidates.length} 张本地图片...`);
   }
 
   for (const asset of candidates) {
+    if (asset.src.startsWith("data:image/")) {
+      const base64 = asset.src.split(",", 2)[1] ?? "";
+      const byteLength = Math.ceil((base64.length * 3) / 4);
+
+      if (!base64 || byteLength > maxVisionBytes) {
+        onStatus?.(`${asset.originalName ?? asset.alt} 太大或无法读取，已作为素材保留但跳过识图。`);
+        continue;
+      }
+
+      inputs.push({
+        asset,
+        dataUrl: asset.src,
+      });
+      continue;
+    }
+
     const relativePath = asset.src.replace(/^\/+/, "");
     const filePath = path.join(process.cwd(), "public", relativePath);
     const stat = await fs.stat(filePath).catch(() => null);

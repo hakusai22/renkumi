@@ -64,8 +64,18 @@ const planFromSpec = (spec: VideoSpec): GeneratedVideoPlan => ({
   scenes: spec.scenes,
 });
 
+const readFileAsDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(String(reader.result ?? "")));
+    reader.addEventListener("error", () => reject(reader.error ?? new Error("Failed to read file.")));
+    reader.readAsDataURL(file);
+  });
+
 const sessionDraftKey = "launchcut.video-draft.v1";
 const latestRenderFallbackWindowMs = 24 * 60 * 60 * 1000;
+const allowedLocalImageTypes = new Set(["image/png", "image/jpeg", "image/webp", "image/svg+xml"]);
+const maxLocalImageBytes = 3 * 1024 * 1024;
 
 type SessionDraft = {
   brief?: string;
@@ -225,16 +235,41 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
       return;
     }
 
+    const renderDraft = latestRender
+      ? {
+          id: latestRender.id,
+          status: latestRender.status,
+          statusUrl: latestRender.statusUrl,
+          pageUrl: latestRender.pageUrl,
+          outputUrl: latestRender.outputUrl,
+          error: latestRender.error,
+          updatedAt: latestRender.updatedAt,
+          progress: latestRender.progress,
+        }
+      : null;
     const draft = JSON.stringify({
       brief,
       assets,
       selectedDesignId,
       generatedPlan,
-      latestRender,
+      latestRender: renderDraft,
     } satisfies SessionDraft);
 
-    window.sessionStorage.setItem(sessionDraftKey, draft);
-    window.localStorage.setItem(sessionDraftKey, draft);
+    try {
+      window.sessionStorage.setItem(sessionDraftKey, draft);
+      window.localStorage.setItem(sessionDraftKey, draft);
+    } catch {
+      const lightweightDraft = JSON.stringify({
+        brief,
+        assets: assets.filter((asset) => !asset.src.startsWith("data:")),
+        selectedDesignId,
+        generatedPlan,
+        latestRender: renderDraft,
+      } satisfies SessionDraft);
+
+      window.sessionStorage.setItem(sessionDraftKey, lightweightDraft);
+      window.localStorage.setItem(sessionDraftKey, lightweightDraft);
+    }
   }, [assets, brief, generatedPlan, hasLoadedSessionDraft, latestRender, selectedDesignId]);
 
   const updateBrief = (value: string) => {
@@ -248,7 +283,7 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
     setRenderStatus("");
   };
 
-  const uploadScreenshots = async (fileList: FileList | null) => {
+  const stageScreenshots = async (fileList: FileList | null) => {
     const files = Array.from(fileList ?? []);
     if (files.length === 0) {
       return;
@@ -258,30 +293,37 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
     setLatestRender(null);
     setWorkflowStep("input");
     setRenderStatus("");
-    setUploadStatus(`上传 ${files.length} 张截图中...`);
+    setUploadStatus(`正在读取 ${files.length} 张本地截图...`);
 
-    const uploadOne = async (file: File) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await fetch("/api/assets/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload.error ?? `${file.name} 上传失败`);
+    const stageOne = async (file: File) => {
+      if (!allowedLocalImageTypes.has(file.type)) {
+        throw new Error(`${file.name} 不是支持的图片格式，请使用 PNG、JPG、WebP 或 SVG。`);
       }
 
-      return payload.asset as AssetSpec;
+      if (file.size > maxLocalImageBytes) {
+        throw new Error(`${file.name} 超过 3MB。部署环境会把图片作为 base64 随请求发送，请先压缩后再试。`);
+      }
+
+      const extension = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1] || "png";
+      const id = `shot-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
+
+      return {
+        id,
+        type: "screenshot",
+        src: await readFileAsDataUrl(file),
+        alt: file.name || "Local product screenshot",
+        mimeType: file.type,
+        size: file.size,
+        originalName: file.name || `${id}.${extension}`,
+      } satisfies AssetSpec;
     };
 
     try {
-      const uploaded = await Promise.all(files.map(uploadOne));
-      setAssets((current) => [...uploaded, ...current]);
-      setUploadStatus(`已添加 ${uploaded.length} 张截图，本次浏览器会话已缓存素材引用。`);
+      const staged = await Promise.all(files.map(stageOne));
+      setAssets((current) => [...staged, ...current]);
+      setUploadStatus(`已临时添加 ${staged.length} 张截图。图片没有上传，生成时会作为 base64 随请求发送。`);
     } catch (error) {
-      setUploadStatus(error instanceof Error ? error.message : "截图上传失败");
+      setUploadStatus(error instanceof Error ? error.message : "读取本地截图失败");
     }
   };
 
@@ -308,7 +350,7 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
     setScriptMessages([]);
     setScriptTokenCount(0);
     setScriptStatus("准备根据描述和图片生成视频方案...");
-    pushScriptMessage("正在整理用户描述和上传素材...");
+    pushScriptMessage("正在整理用户描述和本地素材...");
 
     try {
       const response = await fetch("/api/script/optimize/stream", {
@@ -524,7 +566,7 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
         <section className="simple-hero">
           <p className="eyebrow">LaunchCut workflow</p>
           <h1>先让 AI 读懂描述和截图，再确认分镜，最后生成视频</h1>
-          <p>上传产品截图后，AI 会结合画面内容、用户描述和设计库生成 Remotion 视频方案。方案完成后可以编辑，也可以直接下一步渲染。</p>
+          <p>添加产品截图后，AI 会结合画面内容、用户描述和设计库生成 Remotion 视频方案。方案完成后可以编辑，也可以直接下一步渲染。</p>
         </section>
 
         {workflowStep === "input" ? (
@@ -544,10 +586,10 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
                 type="file"
                 multiple
                 accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                onChange={(event) => uploadScreenshots(event.target.files)}
+                onChange={(event) => stageScreenshots(event.target.files)}
               />
-              <span>上传产品截图</span>
-              <strong>PNG / JPG / WebP 会进入 AI 识图；SVG 会作为素材保留但不送入视觉模型</strong>
+              <span>添加产品截图</span>
+              <strong>图片仅临时保存在本浏览器；生成时以 base64 随请求发送，SVG 不送入视觉模型</strong>
             </label>
 
             <AssetList assets={assets} fallbackAssets={spec.assets.slice(0, 3)} />
@@ -599,7 +641,7 @@ export function VideoConsole({ initialSpec }: VideoConsoleProps) {
                 </div>
                 <div>
                   <span>素材识别</span>
-                  <strong>{assets.length > 0 ? `${assets.length} 张上传图片` : "仅根据描述"}</strong>
+                  <strong>{assets.length > 0 ? `${assets.length} 张本地图片` : "仅根据描述"}</strong>
                 </div>
                 <div>
                   <span>镜头结构</span>
@@ -760,7 +802,7 @@ function AssetList({ assets, fallbackAssets }: { assets: AssetSpec[]; fallbackAs
       <div className="section-heading">
         <div>
           <p className="eyebrow">Screenshots</p>
-          <h2>已上传素材</h2>
+          <h2>已添加素材</h2>
         </div>
         <span className="pill">{assets.length}</span>
       </div>
@@ -772,7 +814,7 @@ function AssetList({ assets, fallbackAssets }: { assets: AssetSpec[]; fallbackAs
               <strong>{asset.originalName ?? asset.id}</strong>
               <div className="muted" style={{ fontSize: 13 }}>
                 {asset.mimeType ?? asset.type} · {asset.size ? `${Math.round(asset.size / 1024)}KB · ` : ""}
-                {asset.src}
+                {asset.src.startsWith("data:") ? "本地临时图片（base64）" : asset.src}
               </div>
             </div>
           </div>
