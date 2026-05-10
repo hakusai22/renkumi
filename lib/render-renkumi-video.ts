@@ -1,20 +1,66 @@
 import { promises as fs } from "node:fs";
+import { createRequire } from "node:module";
+import os from "node:os";
 import path from "node:path";
 import { bundle } from "@remotion/bundler";
-import { renderMedia, selectComposition } from "@remotion/renderer";
 import {
   getRenderOutputPath,
   getRenderOutputUrl,
+  isHostedRenderRuntime,
   readRenderTask,
   updateRenderTask,
 } from "./render-store";
 
 const compositionId = "RenkumiVideo";
 const entryPoint = path.join(process.cwd(), "remotion", "index.ts");
+const nodeRequire = createRequire(import.meta.url);
 let bundledServeUrlPromise: Promise<string> | undefined;
+
+const getRuntimeRequire = (): NodeJS.Require => {
+  try {
+    return Function("return require")() as NodeJS.Require;
+  } catch {
+    return nodeRequire;
+  }
+};
+
+const getRemotionBrowserCacheDir = () => {
+  const configuredDir = process.env.REMOTION_BROWSER_CACHE_DIR?.trim();
+  if (configuredDir) {
+    return path.isAbsolute(configuredDir) ? configuredDir : path.join(process.cwd(), configuredDir);
+  }
+
+  return isHostedRenderRuntime() ? path.join(os.tmpdir(), "renkumi", "remotion-browser") : null;
+};
+
+const patchRemotionBrowserCacheDir = () => {
+  const cacheDir = getRemotionBrowserCacheDir();
+  if (!cacheDir) {
+    return;
+  }
+
+  try {
+    const runtimeRequire = getRuntimeRequire();
+    const packageJsonPath = runtimeRequire.resolve("@remotion/renderer/package.json");
+    const modulePath = path.join(path.dirname(packageJsonPath), "dist", "browser", "get-download-destination.js");
+    const downloadDestination = runtimeRequire(modulePath) as { getDownloadsCacheDir: () => string };
+    downloadDestination.getDownloadsCacheDir = () => cacheDir;
+  } catch (error) {
+    throw new Error(
+      `Failed to configure Remotion browser cache directory at ${cacheDir}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+};
+
+patchRemotionBrowserCacheDir();
+
+const { renderMedia, selectComposition } = nodeRequire("@remotion/renderer") as typeof import("@remotion/renderer");
 
 const getBundledServeUrl = () => {
   bundledServeUrlPromise ??= bundle({
+    enableCaching: !isHostedRenderRuntime(),
     entryPoint,
     webpackOverride: (config) => config,
   }).catch((error) => {

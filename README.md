@@ -11,7 +11,7 @@ Renkumi（レンクミ）是一个面向产品团队的 AI 视频生成工作台
 - 用一段产品 brief 生成品牌信息、分镜、文案、镜头节奏和视觉风格。
 - 上传产品截图，并把截图绑定到每个视频镜头。
 - 在工作台里编辑分镜标题、副标题、旁白、素材和输出参数。
-- 选择 Remotion 或 HyperFrames 渲染引擎，在本地生成 MP4；部署到 Vercel 时通过 Blob 队列交给独立 worker 渲染。
+- 选择 Remotion 或 HyperFrames 渲染引擎，在本地生成 MP4；部署到 Vercel 时通过 Blob 保存任务和结果，可用单项目后台渲染或独立 worker。
 - 可选接入 OpenAI 文本、视觉和图片模型，用于 AI 分镜、截图理解和图片增强。
 
 ## 工作流
@@ -31,7 +31,7 @@ Renkumi（レンクミ）是一个面向产品团队的 AI 视频生成工作台
 - Remotion 4
 - HyperFrames HTML composition
 - OpenAI SDK 5
-- 本地文件型 render store；Vercel 部署使用 Vercel Blob 保存渲染状态和视频文件，独立 worker 负责长时间渲染
+- 本地文件型 render store；Vercel 部署使用 Vercel Blob 保存渲染状态和视频文件，单项目后台任务或独立 worker 负责长时间渲染
 
 ## 快速开始
 
@@ -100,7 +100,7 @@ BLOB_READ_WRITE_TOKEN=...
 RENDER_EXECUTION_MODE=vercel-background
 ```
 
-私有 Blob 视频通过 `/api/render/output?id=...` 读取，`/api/render/health` 可检查 Blob 读写和渲染执行器状态。
+私有 Blob 视频通过 `/api/render/output?id=...` 读取，`/api/render/health` 可检查 Blob 读写和渲染执行器状态。Remotion 浏览器缓存在线上默认写入 `/tmp/renkumi/remotion-browser`，通常不需要手动设置 `REMOTION_BROWSER_CACHE_DIR`。
 
 ### 方案 A：只部署当前 Vercel 项目
 
