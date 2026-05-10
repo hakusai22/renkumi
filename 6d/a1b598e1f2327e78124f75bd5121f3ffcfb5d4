@@ -1,0 +1,69 @@
+remotion/Root.tsx
+  s_b9aab9a3781171::t_f0156b2741da61 4,9-10
+app/layout.tsx
+  s_b9aab9a3781171::t_c9d59194534078 5-6
+lib/ai-script.ts
+  s_b9aab9a3781171::t_a3fc550f9a1fc5 278,317
+scripts/sync-design-library.ts
+  s_b9aab9a3781171::t_0ae6291665732c 142,155
+app/home/page.tsx
+  s_b9aab9a3781171::t_d9d54638a08b32 112-116,120-124,128-132,335-337
+  s_b9aab9a3781171::t_dc86fc67dff3dd 236
+  s_b9aab9a3781171::t_c77a735f2ca761 9,11-14,17-20,23-26,30-89,91-111,117-119,125-127,133,146,148-150,154-158,160-161,163-165,170-181,183-228,233-235,237-238,240-248,257-267,270-275,277-292,295-299,302-307,310-317,321-325,328-334,338-355,357
+  s_b9aab9a3781171::t_1bad1dfe91a4ea 5-6,90,141-142,159,162,166-169,182,256,309,326-327,356
+lib/video-spec.ts
+  s_b9aab9a3781171::t_5854840b55c5ea 93-95,101-102,121-122,127-128,133-134,141-142,171,201,214,216
+components/VideoConsole.tsx
+  s_b9aab9a3781171::t_227e5cbb50b992 9,88,192,994,1223
+scripts/render-worker.ts
+  s_b9aab9a3781171::t_f0156b2741da61 2,13
+public/assets/renkumi-results.svg
+  s_b9aab9a3781171::t_af361f0ff7deea 1
+.idea/copilot.data.migration.ask2agent.xml
+  ai_agent 1-6
+public/assets/renkumi-hero.svg
+  s_b9aab9a3781171::t_af361f0ff7deea 1
+lib/render-store.ts
+  s_b9aab9a3781171::t_5e18866237bb59 35,37
+package.json
+  s_b9aab9a3781171::t_c9d59194534078 2
+.omx/state/session.json
+  ai_agent 2-4,6
+app/globals.css
+  s_b9aab9a3781171::t_257f8e42ba85e3 1345-1354,1356-1366,1372,1376-1380,1387-1390,1396-1399,1401-1403,1405,1411-1418,1422,1425-1426,1428-1445,1448,1450-1457,1459,1462-1471,1474,1477-1504,1507-1509,1511-1512,1516-1523,1540-1546,1549,1552-1790,1793-1864,1866,1871,1874-1885,1889,1891-1893,1897,1899-1900,1903-1918,1920-1928,1930-1931,1934-1939,1942,1944-1945,1947,1950-1963,1966-1994,1996-1999,2002-2003,2006-2009,2012-2024,2027-2031,2034-2069,2073-2110,2112-2131,2133-2190,2192-2268
+  s_b9aab9a3781171::t_911acb667a85d0 1524,1526-1539,2453-2457
+  s_b9aab9a3781171::t_51cd7d5d06a468 2276-2340,2391,2412,2420-2452,2458-2461,2463-2469,2472-2478,2481-2483,2486-2487,2490-2492,2495-2529,2533-2572
+.idea/modules.xml
+  s_b9aab9a3781171::t_c9d59194534078 5
+lib/render-renkumi-video.ts
+  s_b9aab9a3781171::t_f0156b2741da61 11,39
+public/assets/renkumi-workflow.svg
+  s_b9aab9a3781171::t_af361f0ff7deea 1,5
+.idea/copilot.data.migration.edit.xml
+  ai_agent 1-6
+remotion/RenkumiVideo.tsx
+  s_b9aab9a3781171::t_f0156b2741da61 26,106
+DESIGN.md
+  s_b9aab9a3781171::t_9a38e9e60937fc 1,5,40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "6da1b598e1f2327e78124f75bd5121f3ffcfb5d4",
+  "prompts": {},
+  "humans": {
+    "h_b4d8471e2ec6a0": {
+      "author": "hakusai"
+    }
+  },
+  "sessions": {
+    "s_b9aab9a3781171": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e10f3-985e-7fc1-beb0-6c973a5cbd84",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai <hakusai22@qq.com>"
+    }
+  }
+}
