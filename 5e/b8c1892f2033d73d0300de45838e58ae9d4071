@@ -1,0 +1,90 @@
+scripts/render-worker.ts
+  s_d6c82c99b35f47::t_b07df6bd7ff991 2,7-11,17-20
+scripts/render-hyperframes-storyboard.py
+  s_d6c82c99b35f47::t_6ea56cdde665cb 6,9,22-38,41,43,45-50,52,55,58-67,72,74,83,96,116-120,128-131,134-135
+lib/render-renkumi-video.ts
+  s_d6c82c99b35f47::t_dc9b48996a4fed 46,102
+app/renders/[id]/page.tsx
+  s_d6c82c99b35f47::t_d4f750c5b3d63e 30,42-46
+package.json
+  s_d6c82c99b35f47::t_c7d1232960960e 14-15
+lib/ai-script.ts
+  s_d6c82c99b35f47::t_09ca131de74170 565
+  s_d6c82c99b35f47::t_84b1d8c15da067 323
+  s_d6c82c99b35f47::t_0921b67b37f0ef 279,329-333,566
+lib/skills.ts
+  s_d6c82c99b35f47::t_5c166066ebd568 152-185,196,241,285
+app/globals.css
+  s_d6c82c99b35f47::t_e4714e6ff17974 3205-3222
+  s_d6c82c99b35f47::t_5716d3afffe124 3447,3465
+  s_27b3f7aba7453b::t_97642325b4709d 175,234-236,243-244,2656-2659,2670-2671,2684-2685,2696,2704-2705,3337-3356,3385-3389,3400-3401,3414-3416,3418-3425
+  s_d6c82c99b35f47::t_41ff723fed4e3f 1050-1092
+  s_d6c82c99b35f47::t_e39ed216250a81 2812,2842
+app/api/render/route.ts
+  s_d6c82c99b35f47::t_ab5a97637aac34 3,9,13-15,18
+  s_d6c82c99b35f47::t_2ceb5a3f419861 30
+tsconfig.tsbuildinfo
+  s_27b3f7aba7453b::t_b66115af014800 1
+lib/render-store.ts
+  s_d6c82c99b35f47::t_0b9b1610f7821f 5,18,26-29,34,42-43,45-57,61-64,69
+lib/render-hyperframes-video.ts
+  s_d6c82c99b35f47::t_6280fa28183ada 1-786
+app/layout.tsx
+  s_2ed4e128811e59::t_4f97d236d89032 19
+components/VideoConsole.tsx
+  s_d6c82c99b35f47::t_d6276cc3299735 16,49,54-55,112-129,134,150
+  s_d6c82c99b35f47::t_be084e1a63328c 803,1097,1137,1167,1646
+  s_d6c82c99b35f47::t_8e889edda7e518 448,465,469
+  s_d6c82c99b35f47::t_90526adb639f3a 617
+  s_d6c82c99b35f47::t_830acd476075cd 284,316-317
+  s_d6c82c99b35f47::t_a11e8e31eb4b13 905-910
+  s_d6c82c99b35f47::t_c06b78a24e6bbe 934,946,960
+  s_d6c82c99b35f47::t_ba3c5860ba722a 1562-1602
+  s_d6c82c99b35f47::t_2ee0e41e6fb4a3 514,566-568,577,589
+  s_d6c82c99b35f47::t_0d333e5b19fb3b 1011,1024
+  s_d6c82c99b35f47::t_c0c9be0ce93545 1377
+  s_d6c82c99b35f47::t_748fa7bdcd3729 1235
+  s_d6c82c99b35f47::t_4f0c304b7fdb70 712,856
+  s_d6c82c99b35f47::t_9650be603b4b72 1401-1405
+  s_d6c82c99b35f47::t_86be1565a1a58b 1491
+  s_d6c82c99b35f47::t_ffc8d887f6b7ae 347,360,380
+app/home/page.tsx
+  s_d6c82c99b35f47::t_f6815a9f87ca13 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "5eb8c1892f2033d73d0300de45838e58ae9d4071",
+  "prompts": {},
+  "humans": {
+    "h_b4d8471e2ec6a0": {
+      "author": "hakusai"
+    }
+  },
+  "sessions": {
+    "s_27b3f7aba7453b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e11c7-58e9-7c61-9267-3f36b757f8f3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai <hakusai22@qq.com>"
+    },
+    "s_2ed4e128811e59": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e11b6-262e-78f3-a321-badabc5b0888",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai <hakusai22@qq.com>"
+    },
+    "s_d6c82c99b35f47": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e11b9-0529-7510-b29c-a08c96e95b6b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai <hakusai22@qq.com>"
+    }
+  }
+}
