@@ -1,0 +1,26 @@
+next.config.mjs
+  s_5ed99d271ed0fa::t_fdf41fad3f00d6 7
+tsconfig.tsbuildinfo
+  s_5ed99d271ed0fa::t_7715dfbff661f0 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "5edd291272025a1e631f0db41eb0f61b627607de",
+  "prompts": {},
+  "humans": {
+    "h_a1adbf7c51e263": {
+      "author": "hakusai <hakusai22@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_5ed99d271ed0fa": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e1299-8e65-7f01-9dac-d1ff373e62ac",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai <hakusai22@qq.com>"
+    }
+  }
+}
