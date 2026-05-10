@@ -1020,13 +1020,12 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
         </div>
 
         <div className="field">
-          <label>产品描述 / 视频需求</label>
           <textarea
             className="brief-input"
             value={brief}
             maxLength={1000}
+            aria-label="描述产品和视频目标"
             onChange={(event) => updateBrief(event.target.value)}
-            placeholder="例如：Yomori 是一个面向学生的 AI 阅读学习工具。用户上传 PDF、文章或教材，系统自动总结重点、生成学习路径和复习卡片。视频要突出上传文档、智能分析、可视化学习进度。"
           />
         </div>
 
@@ -1055,7 +1054,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
         {uploadStatus ? <div className="status-box">{uploadStatus}</div> : null}
       </section>
 
-      <AssetList assets={assets} fallbackAssets={spec.assets.slice(0, 3)} onRemove={removeAsset} />
+      <AssetList assets={assets} onRemove={removeAsset} />
 
       <TemplatePicker activeId={selectedDesign?.id ?? selectedDesignId} onSelect={updateDesign} />
 
@@ -1402,7 +1401,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
                   </div>
                 )}
 
-                <AssetList assets={assets} fallbackAssets={spec.assets.slice(0, 3)} onRemove={removeAsset} />
+                <AssetList assets={assets} onRemove={removeAsset} />
               </aside>
             </div>
 
@@ -1558,15 +1557,16 @@ function BrowserRecordsList({ records }: { records: BrowserGenerationRecord[] })
 
 function AssetList({
   assets,
-  fallbackAssets,
   onRemove,
 }: {
   assets: AssetSpec[];
-  fallbackAssets: AssetSpec[];
   onRemove?: (assetId: string) => void;
 }) {
-  const visibleAssets = assets.length > 0 ? assets : fallbackAssets;
-  const canRemove = assets.length > 0 && Boolean(onRemove);
+  if (assets.length === 0) {
+    return null;
+  }
+
+  const canRemove = Boolean(onRemove);
 
   return (
     <div className="asset-list-card">
@@ -1575,10 +1575,10 @@ function AssetList({
           <p className="eyebrow">Screenshots</p>
           <h2>已添加素材</h2>
         </div>
-        <span className="pill">{visibleAssets.length}</span>
+        <span className="pill">{assets.length}</span>
       </div>
       <div className="asset-list">
-        {visibleAssets.map((asset) => (
+        {assets.map((asset) => (
           <div className="asset-row" key={asset.id}>
             <Image className="asset-thumb" src={asset.src} alt={asset.alt} width={84} height={54} unoptimized />
             <div className="asset-row-content">
