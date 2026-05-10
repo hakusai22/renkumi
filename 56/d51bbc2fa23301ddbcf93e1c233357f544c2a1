@@ -1,0 +1,21 @@
+app/api/render/latest/route.ts
+  s_73b074a02fe9e6::t_a91150562a5fcd 15
+components/VideoConsole.tsx
+  s_73b074a02fe9e6::t_f29c8e3adde790 581-583
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "56d51bbc2fa23301ddbcf93e1c233357f544c2a1",
+  "prompts": {},
+  "sessions": {
+    "s_73b074a02fe9e6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e1241-ddfe-75d2-8ef9-a20d65b53cf0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai <hakusai22@qq.com>"
+    }
+  }
+}
