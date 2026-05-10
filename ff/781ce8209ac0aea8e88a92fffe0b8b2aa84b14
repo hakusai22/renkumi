@@ -1,0 +1,45 @@
+app/globals.css
+  s_fd10c228dfeebd::t_128596d47b41fa 2558-3070,3073-3078,3082-3083,3095-3106,3111-3137
+  s_fd10c228dfeebd::t_ea19feb6cc3777 3071-3072,3079-3081,3084-3094,3107-3110
+  s_b6ed8cd721eda0::t_5925ff91ac4fe9 1711,1717-1722
+hyperframes/renkumi-ai-storyboard/index.html
+  s_b6ed8cd721eda0::t_6eb5d6e6cd64a6 1-621
+scripts/render-hyperframes-storyboard.py
+  s_b6ed8cd721eda0::t_a8f94eb3628fde 27,33
+  s_b6ed8cd721eda0::t_ee8885614bbe11 1-26,28-29,31-32,34-95
+  s_b6ed8cd721eda0::t_32554fd18a5961 30
+components/VideoConsole.tsx
+  s_fd10c228dfeebd::t_3cd1ff7f98cc1b 892-900,902-906,908-936,948,952,977-978,992
+  s_fd10c228dfeebd::t_50030644d93765 907,1413
+app/home/page.tsx
+  s_b6ed8cd721eda0::t_8f9f0d5596b8d8 210-219
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "ff781ce8209ac0aea8e88a92fffe0b8b2aa84b14",
+  "prompts": {},
+  "humans": {
+    "h_b4d8471e2ec6a0": {
+      "author": "hakusai"
+    }
+  },
+  "sessions": {
+    "s_b6ed8cd721eda0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e1145-e050-7813-82bd-a54df557ec4e",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai <hakusai22@qq.com>"
+    },
+    "s_fd10c228dfeebd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e116d-a546-79c3-a2bf-371cbdc56c9b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai <hakusai22@qq.com>"
+    }
+  }
+}
