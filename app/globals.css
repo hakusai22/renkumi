@@ -174,30 +174,59 @@ a {
   gap: 12px;
 }
 
-.workflow-steps {
+.workflow-progress {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.workflow-step {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  border: 0;
+  gap: 6px;
+  border: 1px solid var(--line-soft);
   border-radius: 999px;
-  padding: 0 12px;
-  color: var(--muted);
+  padding: 5px;
   background: var(--paper);
   box-shadow: var(--shadow-border);
-  font-size: 12px;
-  font-weight: 600;
 }
 
-.workflow-step.active {
+.workflow-progress-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 18px;
+  color: var(--muted);
+  background: transparent;
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.workflow-progress-step[data-state="complete"],
+.workflow-progress-step[data-state="current"] {
   color: white;
   background: var(--ink);
   box-shadow: none;
+}
+
+.workflow-progress-step[data-state="upcoming"] {
+  color: var(--muted);
+}
+
+.workflow-progress-step:not(:disabled) {
+  cursor: pointer;
+}
+
+.workflow-progress-step:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.workflow-progress-step:disabled {
+  cursor: default;
+  opacity: 1;
 }
 
 .button {
@@ -2506,7 +2535,7 @@ a {
   }
 
   .nav-actions,
-  .workflow-steps,
+  .workflow-progress,
   .grid-2,
   .review-summary-strip,
   .scene-rail,
@@ -2556,10 +2585,6 @@ a {
   }
 }
 
-.workflow-step-index {
-  display: none;
-}
-
 .generate-shell {
   --brand: #5b3df1;
   --brand-active: #4b2ddd;
@@ -2600,56 +2625,36 @@ a {
     0 0 0 1px rgba(91, 61, 241, 0.08);
 }
 
-.generate-shell .workflow-steps {
-  gap: 20px;
-}
-
-.generate-shell .workflow-step {
-  position: relative;
+.generate-shell .workflow-progress {
   gap: 8px;
-  min-height: 36px;
-  border: 1px solid transparent;
-  padding: 0 12px 0 7px;
-  background: transparent;
-  box-shadow: none;
+  border-color: rgba(31, 41, 55, 0.08);
+  padding: 7px;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow:
+    0 1px 2px rgba(18, 24, 40, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.74);
+}
+
+.generate-shell .workflow-progress-step {
+  min-height: 40px;
+  padding: 0 24px;
   color: var(--generate-muted);
-  font-size: 14px;
-  font-weight: 650;
+  font-size: 15px;
+  font-weight: 780;
 }
 
-.generate-shell .workflow-step:not(:last-child)::after {
-  position: absolute;
-  right: -14px;
-  color: #b4b7c2;
-  content: "›";
-  font-size: 17px;
-  line-height: 1;
+.generate-shell .workflow-progress-step[data-state="complete"],
+.generate-shell .workflow-progress-step[data-state="current"] {
+  background: #111111;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 8px 18px rgba(17, 17, 17, 0.14);
+  color: #fff;
 }
 
-.generate-shell .workflow-step.active {
-  border-color: rgba(91, 61, 241, 0.1);
-  background: rgba(91, 61, 241, 0.09);
-  color: var(--brand);
-}
-
-.generate-shell .workflow-step-index {
-  display: grid;
-  place-items: center;
-  width: 23px;
-  height: 23px;
-  border-radius: 999px;
-  background: #f6f7fb;
-  box-shadow: 0 0 0 1px rgba(31, 41, 55, 0.08);
-  color: #777c89;
-  font-size: 12px;
-  font-weight: 760;
-  line-height: 1;
-}
-
-.generate-shell .workflow-step.active .workflow-step-index {
-  background: var(--brand);
-  box-shadow: 0 8px 16px rgba(91, 61, 241, 0.24);
-  color: white;
+.generate-shell .workflow-progress-step[data-state="upcoming"] {
+  background: #f5f6fa;
+  color: #717682;
 }
 
 .generate-shell .top-nav .button {
@@ -2731,12 +2736,24 @@ a {
   gap: 16px;
 }
 
+.generate-shell .review-workspace {
+  grid-template-columns: minmax(0, 820px) minmax(340px, 0.42fr);
+  gap: 28px;
+}
+
 .generate-shell .generator-panel,
+.generate-shell .review-editor,
 .generate-shell .asset-list-card,
 .generate-shell .draft-card,
 .generate-shell .records-panel,
 .generate-shell .template-panel,
-.generate-shell .skill-panel {
+.generate-shell .skill-panel,
+.generate-shell .ai-plan-card,
+.generate-shell .storyboard-side-card,
+.generate-shell .media-stage,
+.generate-shell .render-submit-bar,
+.generate-shell .review-settings,
+.generate-shell .scene-inspector {
   border: 1px solid var(--generate-line);
   border-radius: 8px;
   background: var(--generate-surface);
@@ -2750,12 +2767,99 @@ a {
   padding: 22px;
 }
 
+.generate-shell .review-editor {
+  gap: 18px;
+  padding: 22px;
+}
+
 .generate-shell .asset-list-card,
 .generate-shell .draft-card,
 .generate-shell .records-panel,
 .generate-shell .template-panel,
-.generate-shell .skill-panel {
+.generate-shell .skill-panel,
+.generate-shell .storyboard-side-card,
+.generate-shell .scene-inspector {
   padding: 18px;
+}
+
+.generate-shell .storyboard-side-card {
+  display: grid;
+  gap: 16px;
+}
+
+.generate-shell .storyboard-readiness {
+  display: grid;
+  gap: 10px;
+}
+
+.generate-shell .storyboard-readiness > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--generate-soft-line);
+}
+
+.generate-shell .storyboard-readiness > div:last-child {
+  border-bottom: 0;
+}
+
+.generate-shell .storyboard-readiness span {
+  color: var(--generate-muted);
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.generate-shell .storyboard-readiness strong {
+  color: var(--generate-ink);
+  font-size: 14px;
+  font-weight: 760;
+  text-align: right;
+}
+
+.generate-shell .media-stage {
+  overflow: hidden;
+  background: #f4f5f8;
+}
+
+.generate-shell .render-output-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #111;
+}
+
+.generate-shell .render-preview-empty {
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  height: 100%;
+  padding: 28px;
+  text-align: center;
+}
+
+.generate-shell .render-preview-empty h2 {
+  margin: 0;
+  color: var(--generate-ink);
+  font-size: 22px;
+  font-weight: 760;
+  line-height: 1.18;
+}
+
+.generate-shell .render-preview-empty p {
+  margin: 0;
+  color: var(--generate-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.generate-shell .render-submit-bar {
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow:
+    0 1px 2px rgba(18, 24, 40, 0.06),
+    0 22px 54px rgba(18, 24, 40, 0.12);
 }
 
 .generate-shell .section-heading {
@@ -2772,6 +2876,14 @@ a {
 
 .generate-shell .generator-panel-heading {
   margin-bottom: -2px;
+}
+
+.generate-shell .render-submit-bar h2,
+.generate-shell .ai-plan-card-header h3,
+.generate-shell .scene-inspector-header h3 {
+  color: var(--generate-ink);
+  font-weight: 750;
+  letter-spacing: 0;
 }
 
 .generate-shell .pill {
@@ -2878,6 +2990,112 @@ a {
 .generate-shell .generator-actions span {
   color: var(--generate-muted);
   font-size: 13px;
+}
+
+.generate-shell .stream-timeline {
+  gap: 8px;
+}
+
+.generate-shell .stream-step {
+  border: 1px solid var(--generate-soft-line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--generate-body);
+}
+
+.generate-shell .ai-plan-card {
+  gap: 18px;
+  padding: 18px;
+  background:
+    linear-gradient(135deg, rgba(91, 61, 241, 0.055), rgba(255, 255, 255, 0.92) 38%),
+    #fff;
+}
+
+.generate-shell .ai-plan-grid > div,
+.generate-shell .review-summary-strip > div {
+  border: 1px solid var(--generate-soft-line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 1px 1px rgba(18, 24, 40, 0.02);
+}
+
+.generate-shell .ai-plan-grid span,
+.generate-shell .review-summary-strip span {
+  color: var(--generate-muted);
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.generate-shell .ai-plan-grid strong,
+.generate-shell .review-summary-strip strong {
+  color: var(--generate-ink);
+  font-weight: 760;
+}
+
+.generate-shell .ai-plan-skeleton span {
+  background: linear-gradient(90deg, rgba(91, 61, 241, 0.08), rgba(91, 61, 241, 0.22), rgba(91, 61, 241, 0.08));
+  background-size: 220% 100%;
+}
+
+.generate-shell .review-settings {
+  overflow: hidden;
+  box-shadow: 0 1px 1px rgba(18, 24, 40, 0.02);
+}
+
+.generate-shell .review-settings summary {
+  color: var(--generate-body);
+}
+
+.generate-shell .review-settings summary strong {
+  color: var(--generate-ink);
+}
+
+.generate-shell .scene-rail {
+  gap: 8px;
+  padding: 2px;
+}
+
+.generate-shell .scene-tab {
+  border: 1px solid var(--generate-soft-line);
+  background: #fff;
+  box-shadow: none;
+  color: var(--generate-body);
+}
+
+.generate-shell .scene-tab:hover {
+  border-color: rgba(91, 61, 241, 0.2);
+  background: rgba(91, 61, 241, 0.045);
+}
+
+.generate-shell .scene-tab.active {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+
+.generate-shell .scene-tab span,
+.generate-shell .scene-tab small {
+  color: var(--generate-muted);
+}
+
+.generate-shell .scene-inspector {
+  box-shadow:
+    0 1px 2px rgba(18, 24, 40, 0.04),
+    0 18px 48px rgba(18, 24, 40, 0.04);
+}
+
+.generate-shell .progress-track {
+  height: 9px;
+  background: #eceef4;
+}
+
+.generate-shell .progress-fill {
+  background: linear-gradient(90deg, #684df6 0%, #5431e8 100%);
+}
+
+.generate-shell .progress-meta {
+  color: var(--generate-muted);
+  font-size: 12px;
 }
 
 .generate-shell .asset-list {
@@ -3045,6 +3263,10 @@ a {
     grid-template-columns: 1fr;
   }
 
+  .generate-shell .review-workspace {
+    grid-template-columns: 1fr;
+  }
+
   .generate-shell .home-side-stack {
     position: static;
   }
@@ -3064,32 +3286,21 @@ a {
     padding: 16px;
   }
 
-  .generate-shell .workflow-steps {
+  .generate-shell .workflow-progress {
     flex-direction: row;
     align-items: center;
     width: 100%;
-    gap: 8px;
+    gap: 5px;
     overflow-x: visible;
-    padding-bottom: 2px;
+    padding: 5px;
   }
 
-  .generate-shell .workflow-step {
+  .generate-shell .workflow-progress-step {
     flex: 0 0 auto;
     width: auto;
-    min-height: 34px;
-    padding: 0 7px 0 5px;
-    font-size: 13px;
-  }
-
-  .generate-shell .workflow-step:not(:last-child)::after {
-    right: -7px;
-    font-size: 14px;
-  }
-
-  .generate-shell .workflow-step-index {
-    width: 21px;
-    height: 21px;
-    font-size: 11px;
+    min-height: 32px;
+    padding: 0 9px;
+    font-size: 12px;
   }
 
   .generate-shell .nav-actions {
@@ -3115,7 +3326,8 @@ a {
   .generate-shell .draft-card,
   .generate-shell .records-panel,
   .generate-shell .template-panel,
-  .generate-shell .skill-panel {
+  .generate-shell .skill-panel,
+  .generate-shell .storyboard-side-card {
     padding: 16px;
   }
 

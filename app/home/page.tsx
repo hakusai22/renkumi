@@ -144,8 +144,8 @@ export default function ProductHomePage() {
         <div className="marketing-links">
           <a href="#workflow">工作流</a>
           <a href="#capabilities">能力</a>
-          <Link href="/generate">开始生成</Link>
-          <Link className="marketing-nav-cta" href="/studio">
+          <Link href="/generate/input">开始生成</Link>
+          <Link className="marketing-nav-cta" href="/generate/storyboard">
             打开工作台
           </Link>
         </div>
@@ -171,11 +171,11 @@ export default function ProductHomePage() {
               通过 AI 分镜、智能剪辑与自动化生成，快速将产品描述和截图转化为高质量发布视频，节省时间，提升影响力。
             </p>
             <div className="launch-actions">
-              <Link className="launch-primary" href="/generate">
+              <Link className="launch-primary" href="/generate/input">
                 开始生成视频
                 <span aria-hidden="true">→</span>
               </Link>
-              <Link className="launch-secondary" href="/studio">
+              <Link className="launch-secondary" href="/generate/storyboard">
                 打开工作台
               </Link>
             </div>
@@ -313,10 +313,10 @@ export default function ProductHomePage() {
           <p>用 AI 让你的产品被更多人看见</p>
         </div>
         <div className="cta-actions">
-          <Link className="launch-secondary light" href="/generate">
+          <Link className="launch-secondary light" href="/generate/input">
             开始生成视频
           </Link>
-          <Link className="launch-outline" href="/studio">
+          <Link className="launch-outline" href="/generate/storyboard">
             打开工作台
           </Link>
         </div>

@@ -43,7 +43,7 @@ export default async function RenderPage({ params }: RenderPageProps) {
               <div className="status-box">渲染尚未完成。刷新页面或请求 /api/render/status?id={task.id} 查看最新状态。</div>
             )}
 
-            <Link className="button secondary" href="/generate">
+            <Link className="button secondary" href="/generate/input">
               重新生成
             </Link>
           </div>

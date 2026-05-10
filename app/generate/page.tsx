@@ -1,6 +1,5 @@
-import { VideoConsole } from "@/components/VideoConsole";
-import { defaultVideoSpec } from "@/lib/video-spec";
+import { redirect } from "next/navigation";
 
 export default function GeneratePage() {
-  return <VideoConsole initialSpec={defaultVideoSpec} mode="home" />;
+  redirect("/generate/input");
 }

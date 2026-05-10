@@ -1,5 +1,4 @@
-import { VideoConsole } from "@/components/VideoConsole";
-import { defaultVideoSpec } from "@/lib/video-spec";
+import { redirect } from "next/navigation";
 
 type StudioPageProps = {
   searchParams: Promise<{ generate?: string }>;
@@ -8,5 +7,5 @@ type StudioPageProps = {
 export default async function StudioPage({ searchParams }: StudioPageProps) {
   const params = await searchParams;
 
-  return <VideoConsole initialSpec={defaultVideoSpec} mode="studio" autoGenerate={params.generate === "1"} />;
+  redirect(params.generate === "1" ? "/generate/ai-plan" : "/generate/storyboard");
 }

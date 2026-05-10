@@ -3,10 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Player } from "@remotion/player";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { designLibrary, type DesignLibraryEntry } from "@/lib/design-library";
-import { RenkumiVideo } from "@/remotion/RenkumiVideo";
 import {
   defaultVideoSpec,
   getTotalDurationInFrames,
@@ -18,11 +16,24 @@ import { buildSpecFromBrief, buildSpecFromGeneratedPlan, type GeneratedVideoPlan
 
 type VideoConsoleProps = {
   initialSpec: VideoSpec;
-  mode?: "home" | "studio";
-  autoGenerate?: boolean;
+  workflowRoute?: WorkflowRoute;
 };
 
+type WorkflowRoute = "input" | "ai-plan" | "storyboard" | "render";
 type WorkflowStep = "input" | "generating" | "review" | "rendering" | "result";
+
+const workflowStages = [
+  { id: "input", label: "输入素材", href: "/generate/input" },
+  { id: "ai-plan", label: "AI 生成方案", href: "/generate/ai-plan" },
+  { id: "storyboard", label: "确认分镜", href: "/generate/storyboard" },
+  { id: "render", label: "渲染视频", href: "/generate/render" },
+] as const;
+
+const getWorkflowStageIndex = (route: WorkflowRoute) =>
+  workflowStages.findIndex((stage) => stage.id === route);
+
+const getInitialWorkflowStep = (route: WorkflowRoute): WorkflowStep =>
+  route === "input" ? "input" : route === "ai-plan" ? "generating" : "review";
 
 type RenderProgress = {
   percent: number;
@@ -233,9 +244,9 @@ const formatRecordTime = (value: string) =>
     minute: "2-digit",
   }).format(new Date(value));
 
-export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = false }: VideoConsoleProps) {
+export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: VideoConsoleProps) {
   const router = useRouter();
-  const [workflowStep, setWorkflowStep] = useState<WorkflowStep>("input");
+  const [workflowStep, setWorkflowStep] = useState<WorkflowStep>(() => getInitialWorkflowStep(workflowRoute));
   const [brief, setBrief] = useState("");
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedVideoPlan | null>(null);
   const [assets, setAssets] = useState<AssetSpec[]>([]);
@@ -278,6 +289,10 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
   const latestScriptMessage = scriptMessages[scriptMessages.length - 1] ?? scriptStatus ?? "正在准备视频方案...";
   const selectedSkillLabel =
     selectedSkillNames.length > 0 ? selectedSkillNames.join(", ") : "自动启用 Remotion skill";
+  const isInputRoute = workflowRoute === "input";
+  const isAiPlanRoute = workflowRoute === "ai-plan";
+  const isStoryboardRoute = workflowRoute === "storyboard";
+  const isRenderRoute = workflowRoute === "render";
   const isActiveRender = useCallback((status?: string) => status === "queued" || status === "rendering", []);
   const isRecentRender = useCallback(
     (task: RenderSnapshot) => !task.updatedAt || Date.now() - new Date(task.updatedAt).getTime() < latestRenderFallbackWindowMs,
@@ -325,7 +340,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
 
     setGeneratedPlan(planFromSpec(task.spec));
     setAssets(getUserAssetsFromSpec(task.spec));
-      setSelectedDesignId(task.spec.creative?.design?.id || defaultDesignId);
+    setSelectedDesignId(task.spec.creative?.design?.id || defaultDesignId);
   }, [getUserAssetsFromSpec]);
 
   const applyRenderSnapshot = useCallback((task: RenderSnapshot, options: { syncSpec?: boolean } = {}) => {
@@ -337,8 +352,13 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
       hydrateRenderSpec(task);
     }
 
-    setWorkflowStep(isActiveRender(task.status) ? "rendering" : "result");
-  }, [hydrateRenderSpec, isActiveRender, upsertBrowserRecord]);
+    if (workflowRoute === "render") {
+      setWorkflowStep(isActiveRender(task.status) ? "rendering" : "result");
+      return;
+    }
+
+    setWorkflowStep(getInitialWorkflowStep(workflowRoute));
+  }, [hydrateRenderSpec, isActiveRender, upsertBrowserRecord, workflowRoute]);
 
   const pollRender = useCallback((id: string) => {
     window.setTimeout(async () => {
@@ -470,12 +490,23 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
       if (draft.latestRender?.id) {
         setLatestRender(draft.latestRender);
         setRenderStatus(draft.latestRender.progress?.message ?? draft.latestRender.status);
-        setWorkflowStep(isActiveRender(draft.latestRender.status) ? "rendering" : "result");
+        setWorkflowStep(
+          workflowRoute === "input"
+            ? "input"
+            : workflowRoute === "render"
+              ? isActiveRender(draft.latestRender.status)
+                ? "rendering"
+                : "result"
+              : workflowRoute === "ai-plan"
+                ? "generating"
+                : "review",
+        );
         void restoreRender(draft.latestRender.id);
       } else if (draft.generatedPlan?.scenes?.length) {
-        setWorkflowStep("review");
+        setWorkflowStep(getInitialWorkflowStep(workflowRoute));
         void restoreRender();
       } else {
+        setWorkflowStep(getInitialWorkflowStep(workflowRoute));
         void restoreRender();
       }
     } catch {
@@ -489,7 +520,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
     return () => {
       isMounted = false;
     };
-  }, [applyRenderSnapshot, isActiveRender, isRecentRender, pollRender]);
+  }, [applyRenderSnapshot, isActiveRender, isRecentRender, pollRender, workflowRoute]);
 
   useEffect(() => {
     if (!hasLoadedSessionDraft) {
@@ -628,7 +659,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
     const localDraftPlan = planFromSpec(localDraftSpec);
 
     hasManualPlanEditsRef.current = false;
-    setWorkflowStep("review");
+    setWorkflowStep("generating");
     setIsGeneratingPlan(true);
     setGeneratedPlan(localDraftPlan);
     setLatestRender(null);
@@ -639,7 +670,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
     pushScriptMessage("已生成本地可编辑草稿。");
     pushScriptMessage("AI 正在读取图片并增强方案...");
 
-    if (mode === "home") {
+    if (isInputRoute) {
       try {
         persistSessionDraft({
           brief: input,
@@ -654,7 +685,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
         setIsGeneratingPlan(false);
         return;
       }
-      router.push("/studio?generate=1");
+      router.push("/generate/ai-plan");
       return;
     }
 
@@ -721,6 +752,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
             setWorkflowStep("review");
             setScriptStatus(payload.message ?? "未配置可用文本模型，已使用本地动态方案。");
             pushScriptMessage("已生成可编辑方案。");
+            router.push("/generate/storyboard");
             return;
           }
 
@@ -735,6 +767,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
             setWorkflowStep("review");
             setScriptStatus(`已使用 ${payload.provider} · ${payload.model} 生成 Remotion 视频方案`);
             pushScriptMessage("方案已生成，可以编辑或直接进入渲染。");
+            router.push("/generate/storyboard");
           }
           return;
         }
@@ -743,6 +776,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
           didReceiveResult = true;
           setWorkflowStep("review");
           setScriptStatus(`${payload.error ?? "AI 视频方案生成失败"}。已保留本地可编辑草稿。`);
+          router.push("/generate/storyboard");
         }
       };
 
@@ -768,6 +802,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
       if (!didReceiveResult) {
         setWorkflowStep("review");
         setScriptStatus("AI 响应结束，但没有返回可用视频方案。已保留本地可编辑草稿。");
+        router.push("/generate/storyboard");
       }
     } catch (error) {
       setWorkflowStep("review");
@@ -778,14 +813,15 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
             ? error.message
             : "AI 视频方案生成失败";
       setScriptStatus(`${message}。已保留本地可编辑草稿。`);
+      router.push("/generate/storyboard");
     } finally {
       window.clearTimeout(timeoutId);
       setIsGeneratingPlan(false);
     }
-  }, [assets, brief, initialSpec, mode, router, selectedDesignId, selectedSkillNames]);
+  }, [assets, brief, initialSpec, isInputRoute, router, selectedDesignId, selectedSkillNames]);
 
   useEffect(() => {
-    if (!autoGenerate || mode !== "studio" || !hasLoadedSessionDraft || hasAutoGeneratedRef.current) {
+    if (!isAiPlanRoute || !hasLoadedSessionDraft || hasAutoGeneratedRef.current) {
       return;
     }
 
@@ -795,7 +831,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
 
     hasAutoGeneratedRef.current = true;
     void generatePlan();
-  }, [autoGenerate, brief, generatePlan, hasLoadedSessionDraft, mode]);
+  }, [brief, generatePlan, hasLoadedSessionDraft, isAiPlanRoute]);
 
   useEffect(() => {
     setSelectedSceneIndex((current) => Math.max(0, Math.min(current, Math.max(0, scenes.length - 1))));
@@ -844,7 +880,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
   const submitRender = async () => {
     if (!generatedPlan) {
       setScriptStatus("请先生成并确认视频方案，再开始渲染。");
-      setWorkflowStep("input");
+      router.push("/generate/input");
       return;
     }
 
@@ -864,7 +900,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
       return;
     }
 
-    setLatestRender({
+    const queuedRender = {
       ...payload,
       progress: {
         percent: 0,
@@ -873,20 +909,23 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
         stage: "queued",
         message: "等待开始",
       },
-    });
-    upsertBrowserRecord({
-      ...payload,
-      progress: {
-        percent: 0,
-        renderedFrames: 0,
-        encodedFrames: 0,
-        stage: "queued",
-        message: "等待开始",
-      },
+    } satisfies RenderSnapshot;
+    setLatestRender(queuedRender);
+    upsertBrowserRecord(queuedRender);
+    persistSessionDraft({
+      brief,
+      assets,
+      selectedDesignId,
+      selectedSkillNames,
+      generatedPlan,
+      latestRender: queuedRender,
     });
     setRenderStatus("任务已创建，正在生成视频...");
+    router.push("/generate/render");
     pollRender(payload.id);
   };
+
+  const currentWorkflowStageIndex = Math.max(0, getWorkflowStageIndex(workflowRoute));
 
   const inputPanel = (
     <div className="generator-flow">
@@ -949,7 +988,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
   );
 
   return (
-    <main className={mode === "home" ? "app-shell generate-shell" : "app-shell"}>
+    <main className="app-shell generate-shell">
       <header className="top-nav">
         <div className="brand-lockup">
           <Link className="brand-home-link" href="/" aria-label="返回首页">
@@ -968,28 +1007,33 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
             </div>
           </div>
         </div>
-        <div className="workflow-steps" aria-label="生成流程">
-          {["输入", "AI 生成", "确认编辑", "渲染"].map((label, index) => {
-            const activeIndex = ["input", "generating", "review", "rendering", "result"].indexOf(workflowStep);
-            const normalizedActive = activeIndex === 4 ? 3 : activeIndex;
+        <nav className="workflow-progress" aria-label="视频生成进度">
+          {workflowStages.map((stage, index) => {
+            const state =
+              index < currentWorkflowStageIndex ? "complete" : index === currentWorkflowStageIndex ? "current" : "upcoming";
             return (
-              <span className={index <= normalizedActive ? "workflow-step active" : "workflow-step"} key={label}>
-                <span className="workflow-step-index">{index + 1}</span>
-                <span>{label}</span>
-              </span>
+              <Link
+                aria-current={state === "current" ? "step" : undefined}
+                className="workflow-progress-step"
+                data-state={state}
+                href={stage.href}
+                key={stage.id}
+              >
+                {stage.label}
+              </Link>
             );
           })}
-        </div>
+        </nav>
         <div className="nav-actions">
-          <button className="button secondary" type="button" onClick={resetDraft}>
+          <Link className="button secondary" href="/generate/input" onClick={resetDraft}>
             新建方案
-          </button>
-          {mode === "studio" ? (
-            <Link className="button secondary" href="/generate" onClick={resetDraft}>
+          </Link>
+          {!isInputRoute ? (
+            <Link className="button secondary" href="/generate/input" onClick={resetDraft}>
               重新生成
             </Link>
           ) : hasDraftContent ? (
-            <Link className="button" href="/studio">
+            <Link className="button" href="/generate/storyboard">
               继续草稿
             </Link>
           ) : null}
@@ -1008,7 +1052,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
           <p>添加产品截图后，AI 会结合画面内容、用户描述和设计库生成 Remotion 视频方案。方案完成后可以编辑，也可以直接下一步渲染。</p>
         </section>
 
-        {mode === "home" ? (
+        {isInputRoute ? (
           <div className="home-route-grid">
             <div>{inputPanel}</div>
             <aside className="home-side-stack">
@@ -1025,14 +1069,14 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
           </div>
         ) : null}
 
-        {mode === "studio" && workflowStep === "input" && !hasDraftContent ? (
+        {!isInputRoute && !canReview && !latestRender && (!isAiPlanRoute || !brief.trim()) ? (
           <section className="generator-panel">
             <div className="section-heading">
               <div>
                 <p className="eyebrow">No draft</p>
                 <h2>还没有可继续的视频草稿</h2>
               </div>
-              <Link className="button secondary" href="/generate">
+              <Link className="button secondary" href="/generate/input">
                 去生成页
               </Link>
             </div>
@@ -1040,7 +1084,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
           </section>
         ) : null}
 
-        {mode === "studio" && workflowStep === "generating" ? (
+        {isAiPlanRoute && brief.trim() ? (
           <section className="generator-panel">
             <div className="section-heading">
               <div>
@@ -1087,7 +1131,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
           </section>
         ) : null}
 
-        {mode === "studio" && (workflowStep === "review" || workflowStep === "rendering" || workflowStep === "result") ? (
+        {(isStoryboardRoute || isRenderRoute) && canReview ? (
           <>
             <div className="review-workspace">
               <section className="review-editor">
@@ -1229,22 +1273,50 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
               </section>
 
               <aside className="preview-column">
-                <div className="media-stage">
-                  <div className="player-aspect">
-                    <Player
-                      component={RenkumiVideo}
-                      inputProps={{ spec }}
-                      durationInFrames={durationInFrames}
-                      fps={spec.output.fps}
-                      compositionWidth={spec.output.width}
-                      compositionHeight={spec.output.height}
-                      style={{ width: "100%", height: "100%" }}
-                      acknowledgeRemotionLicense
-                      controls
-                      loop
-                    />
+                {isStoryboardRoute ? (
+                  <section className="storyboard-side-card">
+                    <div className="section-heading">
+                      <div>
+                        <p className="eyebrow">Storyboard</p>
+                        <h2>待生成视频</h2>
+                      </div>
+                      <span className="pill">{scenes.length} 个镜头</span>
+                    </div>
+                    <div className="storyboard-readiness" aria-label="生成前检查">
+                      <div>
+                        <span>当前阶段</span>
+                        <strong>确认分镜</strong>
+                      </div>
+                      <div>
+                        <span>预计时长</span>
+                        <strong>{totalSeconds}s</strong>
+                      </div>
+                      <div>
+                        <span>视觉风格</span>
+                        <strong>{selectedDesign ? selectedDesign.name : "自动风格"}</strong>
+                      </div>
+                    </div>
+                    <p className="empty-copy">这里还不会生成或播放视频。确认镜头文案、时长和素材后，点击底部按钮开始渲染。</p>
+                  </section>
+                ) : (
+                  <div className="media-stage">
+                    <div className="player-aspect">
+                      {latestRender?.outputUrl ? (
+                        <video className="render-output-video" src={latestRender.outputUrl} controls playsInline preload="metadata" />
+                      ) : (
+                        <div className="render-preview-empty">
+                          <p className="eyebrow">Rendering</p>
+                          <h2>{workflowStep === "rendering" ? "正在生成视频" : "准备生成视频"}</h2>
+                          <p>
+                            {workflowStep === "rendering"
+                              ? renderStatus || "渲染任务创建后，完成的视频会显示在这里。"
+                              : "确认分镜无误后，点击底部按钮开始渲染。"}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <AssetList assets={assets} fallbackAssets={spec.assets.slice(0, 3)} onRemove={removeAsset} />
               </aside>
@@ -1253,7 +1325,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
             <section className="render-submit-bar">
               <div>
                 <p className="eyebrow">Ready to render</p>
-                <h2>{workflowStep === "result" ? "视频生成完成" : "审核完成后生成视频"}</h2>
+                <h2>{workflowStep === "result" ? "视频生成完成" : isRenderRoute ? "准备生成视频" : "审核完成后生成视频"}</h2>
                 <p>
                   {scenes.length} 个镜头 · {assets.length} 张自定义截图 · {totalSeconds}s · 1080p
                   {selectedDesign ? ` · ${selectedDesign.name} 风格` : ""}
@@ -1282,7 +1354,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
                 )}
                 <Link
                   className={workflowStep === "rendering" ? "button secondary disabled-link" : "button secondary"}
-                  href="/generate"
+                  href="/generate/input"
                   onClick={resetDraft}
                 >
                   重新生成
@@ -1331,7 +1403,7 @@ function DraftCard({
             <span>{generatedPlan?.scenes?.length ?? 0} 个镜头</span>
             <span>{latestRender ? `渲染 ${latestRender.status}` : "未渲染"}</span>
           </div>
-          <Link className="button" href="/studio">
+          <Link className="button" href="/generate/storyboard">
             继续编辑
           </Link>
           <button className="button secondary" type="button" onClick={onReset}>
