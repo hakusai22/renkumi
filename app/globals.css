@@ -172,6 +172,7 @@ a {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .workflow-progress {
@@ -230,12 +231,17 @@ a {
 }
 
 .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
   border-radius: 6px;
   min-height: 48px;
   padding: 14px 24px;
   font-size: 16px;
   font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
   background: var(--brand);
   color: white;
   box-shadow: none;
@@ -1039,6 +1045,49 @@ a {
   border-radius: 8px;
   padding: 16px;
   background: var(--paper);
+}
+
+.render-engine-panel {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--paper);
+}
+
+.render-engine-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.render-engine-option {
+  display: grid;
+  gap: 5px;
+  min-height: 92px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--paper);
+  color: var(--ink);
+  text-align: left;
+}
+
+.render-engine-option.active {
+  border-color: var(--ink);
+  background: var(--surface-soft);
+}
+
+.render-engine-option strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.render-engine-option span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .skill-chip-list {
@@ -2604,6 +2653,10 @@ a {
 }
 
 .generate-shell .top-nav {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto minmax(180px, 1fr);
+  align-items: center;
+  gap: 18px;
   min-height: 76px;
   padding: 0 42px;
   border-bottom: 1px solid var(--generate-soft-line);
@@ -2614,6 +2667,8 @@ a {
 
 .generate-shell .brand-lockup {
   gap: 12px;
+  min-width: 0;
+  justify-self: start;
 }
 
 .generate-shell .brand-mark {
@@ -2626,6 +2681,8 @@ a {
 }
 
 .generate-shell .workflow-progress {
+  justify-self: center;
+  max-width: 100%;
   gap: 8px;
   border-color: rgba(31, 41, 55, 0.08);
   padding: 7px;
@@ -2636,11 +2693,16 @@ a {
 }
 
 .generate-shell .workflow-progress-step {
+  white-space: nowrap;
   min-height: 40px;
   padding: 0 24px;
   color: var(--generate-muted);
   font-size: 15px;
   font-weight: 780;
+}
+
+.generate-shell .nav-actions {
+  justify-self: end;
 }
 
 .generate-shell .workflow-progress-step[data-state="complete"],
@@ -2747,6 +2809,7 @@ a {
 .generate-shell .draft-card,
 .generate-shell .records-panel,
 .generate-shell .template-panel,
+.generate-shell .render-engine-panel,
 .generate-shell .skill-panel,
 .generate-shell .ai-plan-card,
 .generate-shell .storyboard-side-card,
@@ -2776,6 +2839,7 @@ a {
 .generate-shell .draft-card,
 .generate-shell .records-panel,
 .generate-shell .template-panel,
+.generate-shell .render-engine-panel,
 .generate-shell .skill-panel,
 .generate-shell .storyboard-side-card,
 .generate-shell .scene-inspector {
@@ -3138,6 +3202,24 @@ a {
   overflow: hidden;
 }
 
+.generate-shell .render-engine-options {
+  gap: 8px;
+}
+
+.generate-shell .render-engine-option {
+  border-color: var(--generate-soft-line);
+  background: #fff;
+}
+
+.generate-shell .render-engine-option.active {
+  border-color: rgba(91, 61, 241, 0.52);
+  background: rgba(91, 61, 241, 0.06);
+}
+
+.generate-shell .render-engine-panel.compact .render-engine-options {
+  grid-template-columns: 1fr;
+}
+
 .generate-shell .template-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
@@ -3252,7 +3334,26 @@ a {
 
 @media (max-width: 1060px) {
   .generate-shell .top-nav {
-    padding: 0 28px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand actions"
+      "workflow workflow";
+    gap: 12px 18px;
+    padding: 14px 28px;
+  }
+
+  .generate-shell .brand-lockup {
+    grid-area: brand;
+  }
+
+  .generate-shell .workflow-progress {
+    grid-area: workflow;
+    justify-self: center;
+    overflow-x: auto;
+  }
+
+  .generate-shell .nav-actions {
+    grid-area: actions;
   }
 
   .generate-shell .page-wrap.simple-page {
@@ -3281,6 +3382,11 @@ a {
 
 @media (max-width: 680px) {
   .generate-shell .top-nav {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "brand"
+      "workflow"
+      "actions";
     gap: 14px;
     min-height: 0;
     padding: 16px;
@@ -3291,7 +3397,8 @@ a {
     align-items: center;
     width: 100%;
     gap: 5px;
-    overflow-x: visible;
+    justify-self: stretch;
+    overflow-x: auto;
     padding: 5px;
   }
 
@@ -3304,7 +3411,18 @@ a {
   }
 
   .generate-shell .nav-actions {
+    justify-self: stretch;
+    flex-direction: row;
+    flex-wrap: wrap;
     width: 100%;
+    gap: 8px;
+  }
+
+  .generate-shell .top-nav .button,
+  .generate-shell .nav-actions a {
+    flex: 1 1 112px;
+    width: auto;
+    padding: 0 12px;
   }
 
   .generate-shell .page-wrap.simple-page {
@@ -3326,6 +3444,7 @@ a {
   .generate-shell .draft-card,
   .generate-shell .records-panel,
   .generate-shell .template-panel,
+  .generate-shell .render-engine-panel,
   .generate-shell .skill-panel,
   .generate-shell .storyboard-side-card {
     padding: 16px;
@@ -3340,6 +3459,10 @@ a {
   }
 
   .generate-shell .template-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .generate-shell .render-engine-options {
     grid-template-columns: 1fr;
   }
 

@@ -27,6 +27,7 @@ export default async function RenderPage({ params }: RenderPageProps) {
           </div>
           <div className="form-stack">
             <div className="status-box">
+              <div>渲染方式：{task.engine ?? "remotion"}</div>
               <div>创建时间：{task.createdAt}</div>
               <div>更新时间：{task.updatedAt}</div>
               {task.error ? <div>错误：{task.error}</div> : null}
@@ -38,6 +39,11 @@ export default async function RenderPage({ params }: RenderPageProps) {
                 <a className="button" href={task.outputUrl} download>
                   下载 MP4
                 </a>
+                {task.compositionUrl ? (
+                  <a className="button secondary" href={task.compositionUrl} target="_blank" rel="noreferrer">
+                    打开 HTML composition
+                  </a>
+                ) : null}
               </>
             ) : (
               <div className="status-box">渲染尚未完成。刷新页面或请求 /api/render/status?id={task.id} 查看最新状态。</div>

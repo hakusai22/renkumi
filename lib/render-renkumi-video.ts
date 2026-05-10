@@ -43,6 +43,7 @@ export async function renderRenkumiVideo(id: string) {
   }
 
   await updateRenderTask(id, {
+    engine: "remotion",
     status: "rendering",
     error: undefined,
     progress: {
@@ -98,6 +99,7 @@ export async function renderRenkumiVideo(id: string) {
 
     return updateRenderTask(id, {
       status: "succeeded",
+      engine: "remotion",
       progress: {
         percent: 100,
         renderedFrames: composition.durationInFrames,

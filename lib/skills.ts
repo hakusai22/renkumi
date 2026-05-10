@@ -149,7 +149,40 @@ const parseSkillFrontmatter = (frontmatter: string) => {
   return parsed;
 };
 
-const getSkillLocations = (): SkillLocation[] => {
+const getPluginSkillLocations = async (home: string): Promise<SkillLocation[]> => {
+  const cacheRoots = [
+    path.join(home, ".codex", "plugins", "cache", "openai-curated"),
+    path.join(home, ".codex", "plugins", "cache", "openai-bundled"),
+  ];
+  const locations: SkillLocation[] = [];
+
+  for (const cacheRoot of cacheRoots) {
+    const plugins = await fs.readdir(cacheRoot, { withFileTypes: true }).catch((error) => {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return [];
+      }
+
+      throw error;
+    });
+
+    for (const plugin of plugins.filter((entry) => entry.isDirectory())) {
+      const pluginRoot = path.join(cacheRoot, plugin.name);
+      const versions = await fs.readdir(pluginRoot, { withFileTypes: true }).catch(() => []);
+
+      for (const version of versions.filter((entry) => entry.isDirectory())) {
+        locations.push({
+          directory: path.join(pluginRoot, version.name, "skills"),
+          source: "user",
+          priority: 6,
+        });
+      }
+    }
+  }
+
+  return locations;
+};
+
+const getSkillLocations = async (): Promise<SkillLocation[]> => {
   const cwd = process.cwd();
   const home = os.homedir();
 
@@ -160,6 +193,7 @@ const getSkillLocations = (): SkillLocation[] => {
     { directory: path.join(home, ".agents", "skills"), source: "user", priority: 3 },
     { directory: path.join(home, ".codex", "skills"), source: "user", priority: 4 },
     { directory: path.join(home, ".claude", "skills"), source: "user", priority: 5 },
+    ...(await getPluginSkillLocations(home)),
   ];
 };
 
@@ -204,7 +238,7 @@ const listSkillDirectories = async (location: SkillLocation) => {
 const getSkillIndex = async () => {
   const byName = new Map<string, SkillSummary & { directory: string; priority: number }>();
 
-  for (const location of getSkillLocations()) {
+  for (const location of await getSkillLocations()) {
     const directories = await listSkillDirectories(location);
 
     for (const directory of directories) {
@@ -248,7 +282,7 @@ export const listAvailableSkills = async (): Promise<SkillSummary[]> => {
 const isVideoSkill = (skill: SkillSummary) => {
   const searchable = [skill.name, skill.description, ...skill.tags].join(" ").toLowerCase();
 
-  return skill.name === defaultVideoSkillName || /remotion/.test(searchable);
+  return skill.name === defaultVideoSkillName || /remotion|hyperframes/.test(searchable);
 };
 
 export const listVideoSkills = async () => {

@@ -13,6 +13,7 @@ import {
   type VideoSpec,
 } from "@/lib/video-spec";
 import { buildSpecFromBrief, buildSpecFromGeneratedPlan, type GeneratedVideoPlan } from "@/lib/video-script";
+import type { RenderEngine } from "@/lib/render-store";
 
 type VideoConsoleProps = {
   initialSpec: VideoSpec;
@@ -45,10 +46,13 @@ type RenderProgress = {
 
 type RenderSnapshot = {
   id: string;
+  engine?: RenderEngine;
   status: string;
   statusUrl?: string;
   pageUrl?: string;
   outputUrl?: string;
+  compositionUrl?: string;
+  posterUrl?: string;
   error?: string;
   updatedAt?: string;
   spec?: VideoSpec;
@@ -105,10 +109,29 @@ const compressedImageQuality = 0.78;
 const aiPlanTimeoutMs = 90 * 1000;
 const defaultRemotionSkillName = "remotion-best-practices";
 const defaultDesignId = "vercel";
+const defaultRenderEngine: RenderEngine = "remotion";
+
+const renderEngineOptions: Array<{
+  id: RenderEngine;
+  label: string;
+  description: string;
+}> = [
+  {
+    id: "remotion",
+    label: "Remotion",
+    description: "React 时间轴，适合稳定产品视频输出。",
+  },
+  {
+    id: "hyperframes",
+    label: "HyperFrames",
+    description: "HTML composition，适合更轻的分镜和页面式动效。",
+  },
+];
 
 type SessionDraft = {
   brief?: string;
   assets?: AssetSpec[];
+  renderEngine?: RenderEngine;
   selectedDesignId?: string;
   selectedSkillNames?: string[];
   generatedPlan?: GeneratedVideoPlan | null;
@@ -124,6 +147,7 @@ type BrowserGenerationRecord = {
   updatedAt: string;
   pageUrl?: string;
   outputUrl?: string;
+  engine?: RenderEngine;
   assetCount: number;
   designName?: string;
 };
@@ -257,6 +281,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
   const [uploadStatus, setUploadStatus] = useState<string>("");
   const [renderStatus, setRenderStatus] = useState<string>("");
   const [latestRender, setLatestRender] = useState<RenderSnapshot | null>(null);
+  const [renderEngine, setRenderEngine] = useState<RenderEngine>(defaultRenderEngine);
   const [selectedDesignId, setSelectedDesignId] = useState(defaultDesignId);
   const [availableSkills, setAvailableSkills] = useState<SkillSummary[]>([]);
   const [selectedSkillNames, setSelectedSkillNames] = useState<string[]>([]);
@@ -288,7 +313,8 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
   const selectedSceneNumber = scenes.length ? activeSceneIndex + 1 : 0;
   const latestScriptMessage = scriptMessages[scriptMessages.length - 1] ?? scriptStatus ?? "正在准备视频方案...";
   const selectedSkillLabel =
-    selectedSkillNames.length > 0 ? selectedSkillNames.join(", ") : "自动启用 Remotion skill";
+    selectedSkillNames.length > 0 ? selectedSkillNames.join(", ") : "自动启用视频 skill";
+  const selectedRenderEngine = renderEngineOptions.find((option) => option.id === renderEngine) ?? renderEngineOptions[0];
   const isInputRoute = workflowRoute === "input";
   const isAiPlanRoute = workflowRoute === "ai-plan";
   const isStoryboardRoute = workflowRoute === "storyboard";
@@ -318,6 +344,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
         updatedAt: task.updatedAt ?? now,
         pageUrl: task.pageUrl ?? `/renders/${task.id}`,
         outputUrl: task.outputUrl,
+        engine: task.engine ?? renderEngine,
         assetCount: assets.length,
         designName: selectedDesign?.name,
       };
@@ -330,7 +357,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
         return nextRecords;
       });
     },
-    [assets.length, brief, generatedPlan?.brand?.name, selectedDesign?.name, spec.brand.name],
+    [assets.length, brief, generatedPlan?.brand?.name, renderEngine, selectedDesign?.name, spec.brand.name],
   );
 
   const hydrateRenderSpec = useCallback((task: RenderSnapshot) => {
@@ -350,6 +377,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
 
     if (options.syncSpec) {
       hydrateRenderSpec(task);
+      setRenderEngine(task.engine ?? defaultRenderEngine);
     }
 
     if (workflowRoute === "render") {
@@ -417,7 +445,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
       });
 
       if (skills.length === 0) {
-        setSkillStatus("未发现本机 Agent Skill；生成将使用内置 Remotion 规则。");
+        setSkillStatus("未发现本机 Agent Skill；生成将使用内置视频规则。");
       }
     };
 
@@ -434,11 +462,11 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
     }
 
     if (selectedSkillNames.length === 0) {
-      setSkillStatus("后端会直接使用 Remotion 默认 skill。");
+      setSkillStatus("后端会直接使用默认视频规则。");
       return;
     }
 
-    setSkillStatus(`生成 Remotion 视频将直接使用 ${selectedSkillNames.join(", ")} skill。`);
+    setSkillStatus(`生成视频方案将直接使用 ${selectedSkillNames.join(", ")} skill。`);
   }, [availableSkills.length, selectedSkillNames]);
 
   useEffect(() => {
@@ -483,6 +511,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
       const draft = JSON.parse(cached) as SessionDraft;
       setBrief(draft.brief ?? "");
       setAssets(Array.isArray(draft.assets) ? draft.assets : []);
+      setRenderEngine(draft.renderEngine ?? defaultRenderEngine);
       setSelectedDesignId(draft.selectedDesignId || defaultDesignId);
       setSelectedSkillNames(Array.isArray(draft.selectedSkillNames) ? draft.selectedSkillNames : []);
       setGeneratedPlan(draft.generatedPlan ?? null);
@@ -534,6 +563,9 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
           statusUrl: latestRender.statusUrl,
           pageUrl: latestRender.pageUrl,
           outputUrl: latestRender.outputUrl,
+          compositionUrl: latestRender.compositionUrl,
+          posterUrl: latestRender.posterUrl,
+          engine: latestRender.engine,
           error: latestRender.error,
           updatedAt: latestRender.updatedAt,
           progress: latestRender.progress,
@@ -542,6 +574,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
     const draft = {
       brief,
       assets,
+      renderEngine,
       selectedDesignId,
       selectedSkillNames,
       generatedPlan,
@@ -553,7 +586,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
     } catch {
       // Ignore quota failures after the lightweight fallback has also failed.
     }
-  }, [assets, brief, generatedPlan, hasLoadedSessionDraft, latestRender, selectedDesignId, selectedSkillNames]);
+  }, [assets, brief, generatedPlan, hasLoadedSessionDraft, latestRender, renderEngine, selectedDesignId, selectedSkillNames]);
 
   const updateBrief = (value: string) => {
     hasManualPlanEditsRef.current = false;
@@ -581,6 +614,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
     setUploadStatus("");
     setRenderStatus("");
     setLatestRender(null);
+    setRenderEngine(defaultRenderEngine);
     setSelectedDesignId(defaultDesignId);
     setSelectedSkillNames(availableSkills.filter((skill) => skill.activeByDefault).map((skill) => skill.name));
     window.sessionStorage.removeItem(sessionDraftKey);
@@ -675,6 +709,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
         persistSessionDraft({
           brief: input,
           assets,
+          renderEngine,
           selectedDesignId,
           selectedSkillNames,
           generatedPlan: localDraftPlan,
@@ -765,7 +800,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
 
             setGeneratedPlan(payload.plan);
             setWorkflowStep("review");
-            setScriptStatus(`已使用 ${payload.provider} · ${payload.model} 生成 Remotion 视频方案`);
+            setScriptStatus(`已使用 ${payload.provider} · ${payload.model} 生成视频方案`);
             pushScriptMessage("方案已生成，可以编辑或直接进入渲染。");
             router.push("/generate/storyboard");
           }
@@ -818,7 +853,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
       window.clearTimeout(timeoutId);
       setIsGeneratingPlan(false);
     }
-  }, [assets, brief, initialSpec, isInputRoute, router, selectedDesignId, selectedSkillNames]);
+  }, [assets, brief, initialSpec, isInputRoute, renderEngine, router, selectedDesignId, selectedSkillNames]);
 
   useEffect(() => {
     if (!isAiPlanRoute || !hasLoadedSessionDraft || hasAutoGeneratedRef.current) {
@@ -867,6 +902,12 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
     );
   };
 
+  const updateRenderEngine = (engine: RenderEngine) => {
+    setRenderEngine(engine);
+    setLatestRender(null);
+    setRenderStatus("");
+  };
+
   const toggleSkill = (skillName: string) => {
     setSelectedSkillNames((current) =>
       current.includes(skillName)
@@ -890,7 +931,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
     const response = await fetch("/api/render", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ spec }),
+      body: JSON.stringify({ engine: renderEngine, spec }),
     });
     const payload = await response.json();
 
@@ -902,6 +943,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
 
     const queuedRender = {
       ...payload,
+      engine: payload.engine ?? renderEngine,
       progress: {
         percent: 0,
         renderedFrames: 0,
@@ -915,6 +957,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
     persistSessionDraft({
       brief,
       assets,
+      renderEngine,
       selectedDesignId,
       selectedSkillNames,
       generatedPlan,
@@ -965,7 +1008,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
             开始生成方案
           </button>
           <span>
-            {assets.length} 张自定义截图 · {selectedSkillLabel} ·{" "}
+            {assets.length} 张自定义截图 · {selectedRenderEngine.label} · {selectedSkillLabel} ·{" "}
             {selectedDesign ? `${selectedDesign.name} 风格` : "自动选风格"}
           </span>
         </div>
@@ -977,6 +1020,8 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
       <AssetList assets={assets} fallbackAssets={spec.assets.slice(0, 3)} onRemove={removeAsset} />
 
       <TemplatePicker activeId={selectedDesign?.id ?? selectedDesignId} onSelect={updateDesign} />
+
+      <RenderEnginePicker engine={renderEngine} onChange={updateRenderEngine} />
 
       <SkillPicker
         skills={availableSkills}
@@ -1049,7 +1094,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
         <section className="simple-hero">
           <p className="eyebrow">Renkumi workflow</p>
           <h1>先让 AI 读懂描述和截图，再确认分镜，最后生成视频</h1>
-          <p>添加产品截图后，AI 会结合画面内容、用户描述和设计库生成 Remotion 视频方案。方案完成后可以编辑，也可以直接下一步渲染。</p>
+          <p>添加产品截图后，AI 会结合画面内容、用户描述和设计库生成视频方案。方案完成后可选择 Remotion 或 HyperFrames 渲染。</p>
         </section>
 
         {isInputRoute ? (
@@ -1089,7 +1134,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
             <div className="section-heading">
               <div>
                 <p className="eyebrow">AI planning</p>
-                <h2>正在生成 Remotion 视频方案</h2>
+                <h2>正在生成视频方案</h2>
               </div>
               <span className="pill">{assets.length} 张图片</span>
             </div>
@@ -1119,7 +1164,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
                 </div>
                 <div>
                   <span>镜头结构</span>
-                  <strong>4-7 个 Remotion 镜头</strong>
+                  <strong>4-7 个视频镜头</strong>
                 </div>
               </div>
               <div className="ai-plan-skeleton" aria-hidden="true">
@@ -1187,6 +1232,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
                       </select>
                     </div>
                     <TemplatePicker compact activeId={selectedDesign?.id ?? selectedDesignId} onSelect={updateDesign} />
+                    <RenderEnginePicker compact engine={renderEngine} onChange={updateRenderEngine} />
                   </div>
                 </details>
 
@@ -1328,7 +1374,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
                 <h2>{workflowStep === "result" ? "视频生成完成" : isRenderRoute ? "准备生成视频" : "审核完成后生成视频"}</h2>
                 <p>
                   {scenes.length} 个镜头 · {assets.length} 张自定义截图 · {totalSeconds}s · 1080p
-                  {selectedDesign ? ` · ${selectedDesign.name} 风格` : ""}
+                  {selectedDesign ? ` · ${selectedDesign.name} 风格` : ""} · {selectedRenderEngine.label}
                 </p>
               </div>
               <div className="render-submit-actions">
@@ -1352,6 +1398,11 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
                     {workflowStep === "rendering" ? "生成中..." : "下一步：生成视频"}
                   </button>
                 )}
+                {latestRender?.compositionUrl ? (
+                  <a className="button secondary" href={latestRender.compositionUrl} target="_blank" rel="noreferrer">
+                    HTML composition
+                  </a>
+                ) : null}
                 <Link
                   className={workflowStep === "rendering" ? "button secondary disabled-link" : "button secondary"}
                   href="/generate/input"
@@ -1437,6 +1488,7 @@ function BrowserRecordsList({ records }: { records: BrowserGenerationRecord[] })
                 <div className="record-meta">
                   <span>{formatRecordTime(record.updatedAt)}</span>
                   <span>{record.status}</span>
+                  <span>{record.engine ?? "remotion"}</span>
                   <span>{record.assetCount} 张素材</span>
                   {record.designName ? <span>{record.designName}</span> : null}
                 </div>
@@ -1507,6 +1559,47 @@ function AssetList({
   );
 }
 
+function RenderEnginePicker({
+  compact = false,
+  engine,
+  onChange,
+}: {
+  compact?: boolean;
+  engine: RenderEngine;
+  onChange: (engine: RenderEngine) => void;
+}) {
+  return (
+    <section className={compact ? "render-engine-panel compact" : "render-engine-panel"}>
+      <div className="section-heading">
+        <div>
+          <p className="eyebrow">Render engine</p>
+          <h2>选择渲染方式</h2>
+        </div>
+        <span className="pill">{renderEngineOptions.find((option) => option.id === engine)?.label ?? "Auto"}</span>
+      </div>
+      <div className="render-engine-options" role="radiogroup" aria-label="选择渲染方式">
+        {renderEngineOptions.map((option) => {
+          const isActive = option.id === engine;
+
+          return (
+            <button
+              aria-checked={isActive}
+              className={isActive ? "render-engine-option active" : "render-engine-option"}
+              key={option.id}
+              role="radio"
+              type="button"
+              onClick={() => onChange(option.id)}
+            >
+              <strong>{option.label}</strong>
+              <span>{option.description}</span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function SkillPicker({
   skills,
   selectedSkillNames,
@@ -1550,7 +1643,7 @@ function SkillPicker({
           })}
         </div>
       ) : (
-        <p className="empty-copy">未发现 Remotion skill。你仍可先生成视频，后端会使用内置 Remotion 规则。</p>
+        <p className="empty-copy">未发现视频 skill。你仍可先生成视频，后端会使用内置渲染规则。</p>
       )}
       {status ? <div className="skill-status">{status}</div> : null}
     </section>

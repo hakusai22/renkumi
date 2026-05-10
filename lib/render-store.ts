@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { defaultVideoSpec, type VideoSpec } from "./video-spec";
 
+export type RenderEngine = "remotion" | "hyperframes";
 export type RenderStatus = "queued" | "rendering" | "succeeded" | "failed";
 
 export type RenderProgress = {
@@ -14,6 +15,7 @@ export type RenderProgress = {
 
 export type RenderTask = {
   id: string;
+  engine: RenderEngine;
   status: RenderStatus;
   createdAt: string;
   updatedAt: string;
@@ -21,10 +23,15 @@ export type RenderTask = {
   progress: RenderProgress;
   outputUrl?: string;
   outputPath?: string;
+  compositionUrl?: string;
+  compositionPath?: string;
+  posterUrl?: string;
+  posterPath?: string;
   error?: string;
 };
 
 const renderRoot = path.join(process.cwd(), "public", "renders");
+export const defaultRenderEngine: RenderEngine = "remotion";
 const renderTaskReadRetries = 3;
 const renderTaskReadRetryDelayMs = 40;
 
@@ -32,17 +39,34 @@ export const getRenderRoot = () => renderRoot;
 
 export const getRenderTaskPath = (id: string) => path.join(renderRoot, id, "task.json");
 
-export const getRenderOutputPath = (id: string) => path.join(renderRoot, id, "renkumi-video.mp4");
+const getRenderOutputFileName = (engine: RenderEngine = defaultRenderEngine) =>
+  engine === "hyperframes" ? "renkumi-hyperframes-video.mp4" : "renkumi-video.mp4";
 
-export const getRenderOutputUrl = (id: string) => `/renders/${id}/renkumi-video.mp4`;
+export const getRenderOutputPath = (id: string, engine: RenderEngine = defaultRenderEngine) =>
+  path.join(renderRoot, id, getRenderOutputFileName(engine));
+
+export const getRenderOutputUrl = (id: string, engine: RenderEngine = defaultRenderEngine) =>
+  `/renders/${id}/${getRenderOutputFileName(engine)}`;
+
+export const getHyperframesCompositionPath = (id: string) => path.join(renderRoot, id, "hyperframes", "index.html");
+
+export const getHyperframesCompositionUrl = (id: string) => `/renders/${id}/hyperframes/index.html`;
+
+export const getHyperframesPosterPath = (id: string) => path.join(renderRoot, id, "hyperframes-poster.png");
+
+export const getHyperframesPosterUrl = (id: string) => `/renders/${id}/hyperframes-poster.png`;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export async function createRenderTask(spec: VideoSpec = defaultVideoSpec): Promise<RenderTask> {
+export async function createRenderTask(
+  spec: VideoSpec = defaultVideoSpec,
+  engine: RenderEngine = defaultRenderEngine,
+): Promise<RenderTask> {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   const task: RenderTask = {
     id,
+    engine,
     status: "queued",
     createdAt: now,
     updatedAt: now,

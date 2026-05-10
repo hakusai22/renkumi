@@ -276,7 +276,7 @@ const buildSystemPrompt = (spec: VideoSpec, skillSelection: SkillSelection) => {
   const skillPrompt = composeSkillPrompt(skillSelection.skills);
 
   return `你是 Renkumi 的 AI 视频创意导演。
-你要把用户的原始输入转化成 Remotion 可渲染的结构化视频创意方案。
+你要把用户的原始输入转化成可由 Remotion 或 HyperFrames 渲染的结构化视频创意方案。
 你不能生成代码，只能从给定白名单中选择布局、动效、风格和节奏。
 只返回 JSON，不要 Markdown，不要解释。
 
@@ -320,16 +320,17 @@ const buildSystemPrompt = (spec: VideoSpec, skillSelection: SkillSelection) => {
 - 可选字段没有值时请省略，不要返回 null。
 - animation 不允许使用 scale；需要缩放效果时使用 zoom。
 - 标题适合屏幕大字，尽量 6-16 个中文字符。
-- 副标题适合 Remotion 镜头说明，尽量 18-42 个中文字符。
+- 副标题适合视频镜头说明，尽量 18-42 个中文字符。
 - bullets 每条不超过 6 个中文字符，最多 3 条。
 - 不要虚构用户没有表达的功能、数据、客户或奖项。
 - 如果用户没有提供品牌名，使用当前品牌名：${spec.brand.name}。
 - 文案要直接可用于视频标题、副标题和旁白。
 
-Remotion skill 硬性规则：
-- 不要提出 CSS transition、CSS animation 或 Tailwind animation class；Remotion 渲染不可靠。
-- 动效必须能由 useCurrentFrame()、interpolate()、Easing、spring() 或 Sequence 时间轴表达。
-- 素材应按 Remotion 习惯通过 public/、staticFile()、Img 这类安全路径使用。
+渲染 skill 硬性规则：
+- 方案必须保持 renderer-agnostic：只输出结构化镜头数据，不输出 JSX、HTML、CSS、GSAP 或执行脚本。
+- 如果走 Remotion，动效必须能由 useCurrentFrame()、interpolate()、Easing、spring() 或 Sequence 时间轴表达。
+- 如果走 HyperFrames，镜头必须能映射到 data-start/data-duration 时间段和同步 timeline，不依赖随机数或运行时异步加载。
+- 素材应使用可由 public/static 路径或内联 data URL 读取的安全路径。
 - 只输出结构化方案，不输出、嵌入或要求执行任何第三方脚本。
 
 ${
@@ -561,8 +562,8 @@ export const generateCreativeVideoPlanStream = async ({
 
   onStatus?.(
     skillSelection.skills.length > 0
-      ? `正在校验并套用 ${skillSelection.skills.map((skill) => skill.name).join(", ")} 与 Remotion 安全预设...`
-      : "正在校验并套用 Remotion 安全预设...",
+      ? `正在校验并套用 ${skillSelection.skills.map((skill) => skill.name).join(", ")} 与视频渲染安全预设...`
+      : "正在校验并套用视频渲染安全预设...",
   );
 
   return {

@@ -11,6 +11,8 @@
     "design:sync": "tsx scripts/sync-design-library.ts",
     "remotion:studio": "remotion studio remotion/index.ts",
     "remotion:render": "tsx scripts/render-worker.ts",
+    "hyperframes:render": "tsx scripts/render-worker.ts sample hyperframes",
+    "hyperframes:storyboard": "python3 scripts/render-hyperframes-storyboard.py",
     "render:sample": "tsx scripts/render-worker.ts sample"
   },
   "dependencies": {

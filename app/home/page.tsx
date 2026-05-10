@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Renkumi | 产品介绍",
-  description: "Renkumi（レンクミ）把产品描述、截图和 Remotion 合成为可复用的发布视频工作流。",
+  description: "Renkumi（レンクミ）把产品描述、截图和可选渲染引擎合成为可复用的发布视频工作流。",
 };
 
 const heroHighlights = [
