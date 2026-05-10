@@ -1,0 +1,42 @@
+components/VideoConsole.tsx
+  s_27b3f7aba7453b::t_74ee049818b950 136,148
+  s_27b3f7aba7453b::t_31ee14503ca023 62-66,137-147,150-152,957,967-970,975-976,978-984,992
+  s_27b3f7aba7453b::t_699c61554965f1 958-960,963-966
+  s_27b3f7aba7453b::t_0f831cf569ab00 1453-1455
+tsconfig.tsbuildinfo
+  s_d08cd37e94ca57::t_90a32c4d0a4a17 1
+app/globals.css
+  s_27b3f7aba7453b::t_907e8878bfd4a8 980-983
+app/api/render/route.ts
+  s_27b3f7aba7453b::t_08d6469653f2e9 3,34,42-63
+  s_27b3f7aba7453b::t_589dd82ee07579 16-17,20-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "8fdd47dd0dda06f95f1d939a379bcc472c3c93d3",
+  "prompts": {},
+  "humans": {
+    "h_b4d8471e2ec6a0": {
+      "author": "hakusai"
+    }
+  },
+  "sessions": {
+    "s_27b3f7aba7453b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e11c7-58e9-7c61-9267-3f36b757f8f3",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai <hakusai22@qq.com>"
+    },
+    "s_d08cd37e94ca57": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e11db-1c40-7741-a55a-050f59b4f476",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai <hakusai22@qq.com>"
+    }
+  }
+}
