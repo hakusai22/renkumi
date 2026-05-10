@@ -4,7 +4,7 @@ import path from "node:path";
 const nextConfig = {
   outputFileTracingRoot: path.join(import.meta.dirname),
   outputFileTracingIncludes: {
-    "/api/render": ["./remotion/**/*", "./public/assets/**/*"],
+    "/api/render": ["./remotion/**/*", "./lib/**/*", "./public/assets/**/*"],
   },
   serverExternalPackages: ["@remotion/bundler", "@remotion/renderer", "@rspack/core", "@rspack/binding", "esbuild"],
   transpilePackages: ["remotion", "@remotion/player"],
