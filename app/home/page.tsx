@@ -207,13 +207,16 @@ export default function ProductHomePage() {
               <i />
             </div>
             <div className="launch-video-frame">
-              <span className="launch-star launch-star-purple">✦</span>
-              <span className="launch-star launch-star-mint">✦</span>
-              <div className="launch-ribbon launch-ribbon-mint" />
-              <div className="launch-ribbon launch-ribbon-gold" />
-              <div className="launch-play-button">
-                <span>▶</span>
-              </div>
+              <video
+                className="launch-video-media"
+                src="/assets/renkumi-ai-storyboard.mp4"
+                poster="/assets/renkumi-ai-storyboard-poster.png"
+                controls
+                muted
+                playsInline
+                preload="metadata"
+                aria-label="Renkumi AI 分镜演示视频"
+              />
             </div>
             <div className="launch-floating-card launch-audio-card">
               <strong>

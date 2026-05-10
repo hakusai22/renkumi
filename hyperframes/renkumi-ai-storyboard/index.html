@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Renkumi AI Storyboard</title>
+    <style>
+      :root {
+        --ink: #0f1728;
+        --muted: #667085;
+        --line: rgba(31, 41, 55, 0.1);
+        --violet: #7d5cf7;
+        --mint: #21c7a8;
+        --amber: #f7b84b;
+        --coral: #f07955;
+        --blue: #8fd8ea;
+        --paper: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #f8fbff;
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      }
+
+      [data-composition-id="renkumi-ai-storyboard"] {
+        position: relative;
+        width: 960px;
+        height: 648px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 14% 12%, rgba(143, 216, 234, 0.32), transparent 28%),
+          radial-gradient(circle at 84% 14%, rgba(125, 92, 247, 0.16), transparent 30%),
+          radial-gradient(circle at 88% 86%, rgba(240, 121, 85, 0.16), transparent 32%),
+          linear-gradient(145deg, #fbfdff 0%, #fff7f0 100%);
+      }
+
+      .grid {
+        position: absolute;
+        inset: 0;
+        opacity: 0.34;
+        background-image:
+          linear-gradient(rgba(148, 163, 184, 0.16) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(148, 163, 184, 0.16) 1px, transparent 1px);
+        background-size: 42px 42px;
+      }
+
+      .scene-content {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: 272px 1fr;
+        gap: 28px;
+        width: 100%;
+        height: 100%;
+        padding: 54px;
+      }
+
+      .brief-panel,
+      .canvas-panel,
+      .floating-pill,
+      .scene-card,
+      .output-card {
+        box-shadow:
+          0 24px 56px rgba(31, 41, 55, 0.12),
+          0 0 0 1px rgba(31, 41, 55, 0.06);
+      }
+
+      .brief-panel {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+        border-radius: 28px;
+        padding: 28px;
+        background: rgba(255, 255, 255, 0.86);
+        backdrop-filter: blur(20px);
+      }
+
+      .brand-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .mark {
+        display: grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(145deg, #242630, #050506);
+        color: white;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .brand-row strong {
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 0;
+      }
+
+      .eyebrow {
+        margin: 44px 0 10px;
+        color: var(--violet);
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 44px;
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+
+      .copy-lines {
+        display: grid;
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      .copy-lines span {
+        display: block;
+        height: 12px;
+        border-radius: 999px;
+        background: #e6ebf2;
+      }
+
+      .copy-lines span:nth-child(1) {
+        width: 94%;
+        background: var(--ink);
+        opacity: 0.88;
+      }
+
+      .copy-lines span:nth-child(2) {
+        width: 76%;
+      }
+
+      .copy-lines span:nth-child(3) {
+        width: 86%;
+      }
+
+      .brief-footer {
+        display: flex;
+        gap: 10px;
+        margin-top: auto;
+      }
+
+      .brief-footer span {
+        height: 34px;
+        border-radius: 999px;
+      }
+
+      .brief-footer span:nth-child(1) {
+        width: 112px;
+        background: var(--ink);
+      }
+
+      .brief-footer span:nth-child(2) {
+        width: 64px;
+        background: #e8edf4;
+      }
+
+      .canvas-panel {
+        position: relative;
+        overflow: hidden;
+        border-radius: 32px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(18px);
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 36px;
+        border-radius: 999px;
+        padding: 0 16px;
+        background: #f1f5f9;
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .status i {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--mint);
+        box-shadow: 0 0 0 7px rgba(33, 199, 168, 0.14);
+      }
+
+      .timecode {
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .stage {
+        position: relative;
+        height: 346px;
+        margin-top: 22px;
+        border-radius: 26px;
+        overflow: hidden;
+        background:
+          linear-gradient(145deg, rgba(255, 234, 238, 0.9), rgba(239, 249, 255, 0.95)),
+          #fff;
+      }
+
+      .wave {
+        position: absolute;
+        left: 120px;
+        top: 126px;
+        width: 360px;
+        height: 170px;
+        border-radius: 0 100% 0 100%;
+        background: linear-gradient(145deg, rgba(75, 106, 108, 0.56), rgba(143, 216, 234, 0.32));
+        transform: rotate(-21deg);
+      }
+
+      .wave.gold {
+        left: 150px;
+        top: 154px;
+        border-radius: 50% 0 50% 0;
+        background: linear-gradient(90deg, rgba(255, 224, 121, 0.8), rgba(247, 184, 75, 0.32));
+        transform: rotate(9deg);
+      }
+
+      .play-core {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        display: grid;
+        place-items: center;
+        width: 112px;
+        height: 112px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 24px 46px rgba(31, 41, 55, 0.16);
+        transform: translate(-50%, -50%);
+      }
+
+      .play-core::before {
+        width: 0;
+        height: 0;
+        margin-left: 9px;
+        border-top: 22px solid transparent;
+        border-bottom: 22px solid transparent;
+        border-left: 34px solid var(--violet);
+        content: "";
+      }
+
+      .floating-pill {
+        position: absolute;
+        left: 30px;
+        top: 28px;
+        width: 210px;
+        border-radius: 20px;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.9);
+      }
+
+      .floating-pill strong {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .spark {
+        color: var(--violet);
+      }
+
+      .pill-lines {
+        display: grid;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .pill-lines i {
+        display: block;
+        height: 11px;
+        border-radius: 999px;
+        background: #e9eef5;
+      }
+
+      .pill-lines i:nth-child(1) {
+        width: 100%;
+      }
+
+      .pill-lines i:nth-child(2) {
+        width: 62%;
+      }
+
+      .pill-lines i:nth-child(3) {
+        width: 82%;
+      }
+
+      .scene-stack {
+        position: absolute;
+        right: 28px;
+        top: 28px;
+        display: grid;
+        gap: 12px;
+        width: 214px;
+      }
+
+      .scene-card {
+        display: grid;
+        grid-template-columns: 40px 1fr;
+        gap: 12px;
+        align-items: center;
+        border-radius: 18px;
+        padding: 14px;
+        background: rgba(255, 255, 255, 0.88);
+      }
+
+      .scene-card b {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 14px;
+        color: white;
+        font-size: 18px;
+      }
+
+      .scene-card:nth-child(1) b {
+        background: var(--violet);
+      }
+
+      .scene-card:nth-child(2) b {
+        background: var(--mint);
+      }
+
+      .scene-card:nth-child(3) b {
+        background: var(--amber);
+        color: var(--ink);
+      }
+
+      .scene-card strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .scene-card i {
+        display: block;
+        width: 92%;
+        height: 8px;
+        margin-top: 8px;
+        border-radius: 999px;
+        background: #dce3ec;
+      }
+
+      .timeline {
+        position: absolute;
+        left: 30px;
+        right: 30px;
+        bottom: 28px;
+        height: 72px;
+        border-radius: 20px;
+        padding: 22px 24px;
+        background: rgba(248, 250, 252, 0.94);
+      }
+
+      .track {
+        position: relative;
+        height: 14px;
+        border-radius: 999px;
+        background: #dfe6ef;
+      }
+
+      .track-fill {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 0%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--violet), var(--mint), var(--amber), var(--coral));
+      }
+
+      .node {
+        position: absolute;
+        top: 50%;
+        width: 30px;
+        height: 30px;
+        border: 7px solid white;
+        border-radius: 50%;
+        box-shadow: 0 0 0 5px currentColor;
+        transform: translate(-50%, -50%);
+      }
+
+      .node:nth-child(3) {
+        left: 22%;
+        color: var(--violet);
+      }
+
+      .node:nth-child(4) {
+        left: 52%;
+        color: var(--mint);
+      }
+
+      .node:nth-child(5) {
+        left: 82%;
+        color: var(--amber);
+      }
+
+      .output-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 18px;
+      }
+
+      .output-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 66px;
+        border-radius: 20px;
+        padding: 16px 18px;
+        background: #fff;
+      }
+
+      .output-card strong {
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .output-card span {
+        width: 38px;
+        height: 26px;
+        border-radius: 999px;
+      }
+
+      .output-card:nth-child(1) span {
+        background: var(--violet);
+      }
+
+      .output-card:nth-child(2) span {
+        background: var(--mint);
+      }
+
+      .output-card:nth-child(3) span {
+        background: var(--coral);
+      }
+
+      .star {
+        position: absolute;
+        color: var(--violet);
+        font-size: 32px;
+        font-weight: 900;
+      }
+
+      .star.one {
+        right: 74px;
+        bottom: 112px;
+      }
+
+      .star.two {
+        left: 44px;
+        bottom: 86px;
+        color: var(--mint);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      data-composition-id="renkumi-ai-storyboard"
+      data-width="960"
+      data-height="648"
+      data-start="0"
+      data-duration="6"
+      data-track-index="0"
+    >
+      <div class="grid"></div>
+      <main class="scene-content">
+        <section class="brief-panel" data-part="brief">
+          <div class="brand-row">
+            <div class="mark">レン</div>
+            <strong>Renkumi</strong>
+          </div>
+          <p class="eyebrow">AI 视频分镜</p>
+          <h1>文字变成镜头</h1>
+          <div class="copy-lines">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="brief-footer">
+            <span></span>
+            <span></span>
+          </div>
+        </section>
+
+        <section class="canvas-panel" data-part="canvas">
+          <div class="topbar">
+            <div class="status"><i></i>正在生成分镜</div>
+            <div class="timecode" data-timecode>00:00 / 00:06</div>
+          </div>
+          <div class="stage">
+            <div class="wave" data-part="wave-a"></div>
+            <div class="wave gold" data-part="wave-b"></div>
+            <div class="play-core" data-part="play"></div>
+            <div class="floating-pill" data-part="score">
+              <strong><span class="spark">✣</span>AI 分镜</strong>
+              <div class="pill-lines"><i></i><i></i><i></i></div>
+            </div>
+            <div class="scene-stack">
+              <div class="scene-card" data-scene-card>
+                <b>1</b>
+                <div><strong>开场卖点</strong><i></i></div>
+              </div>
+              <div class="scene-card" data-scene-card>
+                <b>2</b>
+                <div><strong>产品画面</strong><i></i></div>
+              </div>
+              <div class="scene-card" data-scene-card>
+                <b>3</b>
+                <div><strong>导出视频</strong><i></i></div>
+              </div>
+            </div>
+            <div class="star one" data-part="star-a">✦</div>
+            <div class="star two" data-part="star-b">✦</div>
+            <div class="timeline" data-part="timeline">
+              <div class="track">
+                <div class="track-fill" data-part="track-fill"></div>
+                <div class="node"></div>
+                <div class="node"></div>
+                <div class="node"></div>
+              </div>
+            </div>
+          </div>
+          <div class="output-row">
+            <div class="output-card" data-output-card><strong>16:9</strong><span></span></div>
+            <div class="output-card" data-output-card><strong>短视频</strong><span></span></div>
+            <div class="output-card" data-output-card><strong>MP4</strong><span></span></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        const duration = 6;
+        const q = (selector) => document.querySelector(selector);
+        const qa = (selector) => Array.from(document.querySelectorAll(selector));
+        const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+        const easeOut = (x) => 1 - Math.pow(1 - clamp(x, 0, 1), 3);
+        const easeInOut = (x) => {
+          const n = clamp(x, 0, 1);
+          return n < 0.5 ? 4 * n * n * n : 1 - Math.pow(-2 * n + 2, 3) / 2;
+        };
+        const seg = (time, start, end) => clamp((time - start) / (end - start), 0, 1);
+
+        function setIn(element, amount, y, scale) {
+          const a = easeOut(amount);
+          element.style.opacity = String(a);
+          element.style.transform = "translate3d(0," + (1 - a) * y + "px,0) scale(" + (scale + (1 - scale) * a) + ")";
+        }
+
+        function renderAt(time) {
+          const t = clamp(time, 0, duration);
+          q("[data-timecode]").textContent = "00:0" + Math.floor(t) + " / 00:06";
+
+          setIn(q("[data-part='brief']"), seg(t, 0, 0.7), 34, 0.98);
+          setIn(q("[data-part='canvas']"), seg(t, 0.2, 0.9), 42, 0.985);
+          setIn(q("[data-part='score']"), seg(t, 0.8, 1.4), -26, 0.92);
+          setIn(q("[data-part='timeline']"), seg(t, 2.2, 3), 24, 0.98);
+
+          qa("[data-scene-card]").forEach((card, index) => {
+            setIn(card, seg(t, 1.3 + index * 0.38, 1.95 + index * 0.38), 20, 0.96);
+          });
+
+          qa("[data-output-card]").forEach((card, index) => {
+            setIn(card, seg(t, 3.55 + index * 0.25, 4.15 + index * 0.25), 20, 0.96);
+          });
+
+          const pulse = Math.sin(t * Math.PI * 2.4);
+          q("[data-part='play']").style.transform =
+            "translate(-50%, -50%) scale(" + (1 + 0.025 * pulse) + ")";
+          q("[data-part='wave-a']").style.transform =
+            "rotate(" + (-21 + 3 * Math.sin(t * 1.8)) + "deg) translate3d(" + 8 * Math.sin(t * 1.2) + "px,0,0)";
+          q("[data-part='wave-b']").style.transform =
+            "rotate(" + (9 - 2.5 * Math.sin(t * 1.5)) + "deg) translate3d(0," + 6 * Math.cos(t * 1.4) + "px,0)";
+          q("[data-part='star-a']").style.transform =
+            "translate3d(0," + -8 * Math.sin(t * 2.2) + "px,0) scale(" + (1 + 0.06 * Math.sin(t * 2.6)) + ")";
+          q("[data-part='star-b']").style.transform =
+            "translate3d(0," + 7 * Math.cos(t * 2.1) + "px,0) scale(" + (1 + 0.05 * Math.cos(t * 2.8)) + ")";
+
+          const fill = 10 + easeInOut(seg(t, 2.4, 5.25)) * 88;
+          q("[data-part='track-fill']").style.width = fill + "%";
+        }
+
+        window.__timelines = window.__timelines || {};
+        window.__timelines["renkumi-ai-storyboard"] = { duration, seek: renderAt };
+        window.__renkumiRenderAt = renderAt;
+        renderAt(Number(new URLSearchParams(window.location.search).get("t") || 0));
+      })();
+    </script>
+  </body>
+</html>

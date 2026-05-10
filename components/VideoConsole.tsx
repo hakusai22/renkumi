@@ -889,27 +889,51 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
   };
 
   const inputPanel = (
-    <section className="generator-panel">
-      <div className="field">
-        <label>产品描述 / 视频需求</label>
-        <textarea
-          className="brief-input"
-          value={brief}
-          onChange={(event) => updateBrief(event.target.value)}
-          placeholder="例如：Yomori 是一个面向学生的 AI 阅读学习工具。用户上传 PDF、文章或教材，系统自动总结重点、生成学习路径和复习卡片。视频要突出上传文档、智能分析、可视化学习进度。"
-        />
-      </div>
+    <div className="generator-flow">
+      <section className="generator-panel">
+        <div className="section-heading generator-panel-heading">
+          <div>
+            <p className="eyebrow">Brief</p>
+            <h2>描述产品和视频目标</h2>
+          </div>
+          <span className="pill">{brief.length} / 1000</span>
+        </div>
 
-      <label className="upload-box upload-box-large">
-        <input
-          type="file"
-          multiple
-          accept="image/png,image/jpeg,image/webp,image/svg+xml"
-          onChange={(event) => stageScreenshots(event.target.files)}
-        />
-        <span>添加产品截图 / 文件</span>
-        <strong>当前支持 PNG、JPG、WebP、SVG 图片；图片仅临时保存在本浏览器</strong>
-      </label>
+        <div className="field">
+          <label>产品描述 / 视频需求</label>
+          <textarea
+            className="brief-input"
+            value={brief}
+            maxLength={1000}
+            onChange={(event) => updateBrief(event.target.value)}
+            placeholder="例如：Yomori 是一个面向学生的 AI 阅读学习工具。用户上传 PDF、文章或教材，系统自动总结重点、生成学习路径和复习卡片。视频要突出上传文档、智能分析、可视化学习进度。"
+          />
+        </div>
+
+        <label className="upload-box upload-box-large">
+          <input
+            type="file"
+            multiple
+            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            onChange={(event) => stageScreenshots(event.target.files)}
+          />
+          <span>添加产品截图 / 文件</span>
+          <strong>支持 PNG、JPG、WebP、SVG 图片；图片仅临时保存在本浏览器</strong>
+        </label>
+
+        <div className="generator-actions">
+          <button className="button" onClick={generatePlan} disabled={isGeneratingPlan || !brief.trim()}>
+            开始生成方案
+          </button>
+          <span>
+            {assets.length} 张自定义截图 · {selectedSkillLabel} ·{" "}
+            {selectedDesign ? `${selectedDesign.name} 风格` : "自动选风格"}
+          </span>
+        </div>
+
+        {scriptStatus ? <div className="status-box">{scriptStatus}</div> : null}
+        {uploadStatus ? <div className="status-box">{uploadStatus}</div> : null}
+      </section>
 
       <AssetList assets={assets} fallbackAssets={spec.assets.slice(0, 3)} onRemove={removeAsset} />
 
@@ -921,24 +945,11 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
         status={skillStatus}
         onToggle={toggleSkill}
       />
-
-      <div className="generator-actions">
-        <button className="button" onClick={generatePlan} disabled={isGeneratingPlan || !brief.trim()}>
-          开始生成方案
-        </button>
-        <span>
-          {assets.length} 张自定义截图 · {selectedSkillLabel} ·{" "}
-          {selectedDesign ? `${selectedDesign.name} 风格` : "自动选风格"}
-        </span>
-      </div>
-
-      {scriptStatus ? <div className="status-box">{scriptStatus}</div> : null}
-      {uploadStatus ? <div className="status-box">{uploadStatus}</div> : null}
-    </section>
+    </div>
   );
 
   return (
-    <main className="app-shell">
+    <main className={mode === "home" ? "app-shell generate-shell" : "app-shell"}>
       <header className="top-nav">
         <div className="brand-lockup">
           <Link className="brand-home-link" href="/" aria-label="返回首页">
@@ -963,7 +974,8 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
             const normalizedActive = activeIndex === 4 ? 3 : activeIndex;
             return (
               <span className={index <= normalizedActive ? "workflow-step active" : "workflow-step"} key={label}>
-                {label}
+                <span className="workflow-step-index">{index + 1}</span>
+                <span>{label}</span>
               </span>
             );
           })}
@@ -977,7 +989,7 @@ export function VideoConsole({ initialSpec, mode = "studio", autoGenerate = fals
               重新生成
             </Link>
           ) : hasDraftContent ? (
-            <Link className="button secondary" href="/studio">
+            <Link className="button" href="/studio">
               继续草稿
             </Link>
           ) : null}
@@ -1398,7 +1410,7 @@ function AssetList({
           <p className="eyebrow">Screenshots</p>
           <h2>已添加素材</h2>
         </div>
-        <span className="pill">{assets.length}</span>
+        <span className="pill">{visibleAssets.length}</span>
       </div>
       <div className="asset-list">
         {visibleAssets.map((asset) => (
