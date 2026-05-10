@@ -1,5 +1,6 @@
 node_modules
 .next
+.remotion
 out
 dist
 .DS_Store
@@ -8,6 +9,7 @@ dist
 public/renders/*
 
 public/assets/generated/*
+!public/assets/generated/readme-*.png
 public/assets/uploads/*
 !.gitkeep
 /.env.example

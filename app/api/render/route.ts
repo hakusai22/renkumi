@@ -1,8 +1,10 @@
 import { spawn } from "node:child_process";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { renderRenkumiVideoOnVercel } from "@/lib/render-renkumi-video-vercel";
 import {
   createRenderTask,
   defaultRenderEngine,
+  getHostedRenderConfigError,
   isHostedRenderRuntime,
   updateRenderTask,
   type RenderEngine,
@@ -10,6 +12,7 @@ import {
 import { defaultVideoSpec, type VideoSpec } from "@/lib/video-spec";
 
 export const runtime = "nodejs";
+export const maxDuration = 300;
 
 type RenderBody = {
   engine?: RenderEngine;
@@ -19,21 +22,69 @@ type RenderBody = {
 const parseRenderEngine = (value: unknown): RenderEngine =>
   value === "hyperframes" || value === "remotion" ? value : defaultRenderEngine;
 
+const failRenderTask = async (id: string, message: string) => {
+  await updateRenderTask(id, {
+    status: "failed",
+    error: message,
+    progress: {
+      percent: 0,
+      renderedFrames: 0,
+      encodedFrames: 0,
+      stage: "queued",
+      message: "生成失败",
+    },
+  }).catch(() => undefined);
+};
+
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as RenderBody;
   const engine = parseRenderEngine(body.engine);
 
   if (isHostedRenderRuntime()) {
-    return NextResponse.json(
-      {
-        code: "RENDER_UNAVAILABLE_ON_VERCEL",
-        error: "当前 Vercel 部署环境暂不支持直接渲染视频，请在本地运行渲染任务。",
-        detail:
-          "视频渲染需要写入本地文件并启动后台 worker；Vercel Functions 只有 /tmp 可写且不适合这条本地渲染路径。",
-        engine,
+    if (engine !== "remotion") {
+      return NextResponse.json(
+        {
+          code: "RENDER_ENGINE_UNAVAILABLE_ON_VERCEL",
+          error: "当前 Vercel 部署环境仅支持 Remotion Sandbox 渲染。",
+          detail: "HyperFrames 仍需要本地 worker/浏览器/文件系统路径，请在本地运行或接入独立 worker。",
+          engine,
+        },
+        { status: 501 },
+      );
+    }
+
+    const configError = getHostedRenderConfigError();
+    if (configError) {
+      return NextResponse.json({ ...configError, engine }, { status: 501 });
+    }
+
+    const task = await createRenderTask(body.spec ?? defaultVideoSpec, engine);
+    const startedTask = await updateRenderTask(task.id, {
+      status: "rendering",
+      progress: {
+        percent: 1,
+        renderedFrames: 0,
+        encodedFrames: 0,
+        stage: "bundling",
+        message: "任务已创建，正在启动 Vercel Sandbox",
       },
-      { status: 501 },
+    });
+
+    after(
+      renderRenkumiVideoOnVercel(task.id).catch((error: unknown) => {
+        void failRenderTask(task.id, error instanceof Error ? error.message : String(error));
+        console.error(error);
+      }),
     );
+
+    return NextResponse.json({
+      id: startedTask.id,
+      engine: startedTask.engine,
+      status: startedTask.status,
+      progress: startedTask.progress,
+      statusUrl: `/api/render/status?id=${task.id}`,
+      pageUrl: `/renders/${task.id}`,
+    });
   }
 
   const task = await createRenderTask(body.spec ?? defaultVideoSpec, engine);
@@ -44,27 +95,13 @@ export async function POST(request: Request) {
     stdio: "ignore",
   });
 
-  const failTask = (message: string) => {
-    void updateRenderTask(task.id, {
-      status: "failed",
-      error: message,
-      progress: {
-        percent: 0,
-        renderedFrames: 0,
-        encodedFrames: 0,
-        stage: "queued",
-        message: "生成失败",
-      },
-    }).catch(() => undefined);
-  };
-
   child.on("error", (error) => {
-    failTask(error instanceof Error ? error.message : String(error));
+    void failRenderTask(task.id, error instanceof Error ? error.message : String(error));
   });
 
   child.on("exit", (code) => {
     if (code && code !== 0) {
-      failTask(`Render worker exited with code ${code}`);
+      void failRenderTask(task.id, `Render worker exited with code ${code}`);
     }
   });
 

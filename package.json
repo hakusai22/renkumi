@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm remotion:bundle && next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "design:sync": "tsx scripts/sync-design-library.ts",
+    "remotion:bundle": "remotion bundle remotion/index.ts --out-dir .remotion",
     "remotion:studio": "remotion studio remotion/index.ts",
     "remotion:render": "tsx scripts/render-worker.ts",
     "hyperframes:render": "tsx scripts/render-worker.ts sample hyperframes",
@@ -16,16 +17,20 @@
     "render:sample": "tsx scripts/render-worker.ts sample"
   },
   "dependencies": {
-    "@remotion/bundler": "^4.0.370",
-    "@remotion/player": "^4.0.370",
-    "@remotion/renderer": "^4.0.370",
+    "@remotion/bundler": "4.0.426",
+    "@remotion/cli": "4.0.426",
+    "@remotion/player": "4.0.426",
+    "@remotion/renderer": "4.0.426",
+    "@remotion/vercel": "4.0.426",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/blob": "^2.3.3",
+    "@vercel/sandbox": "^1.10.1",
     "next": "^15.0.0",
     "openai": "^5.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "remotion": "^4.0.370",
-    "zod": "^3.23.8"
+    "remotion": "4.0.426",
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

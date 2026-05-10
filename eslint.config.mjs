@@ -7,7 +7,7 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals"),
   {
-    ignores: [".next/**", "node_modules/**", "public/renders/**", "public/assets/generated/**"],
+    ignores: [".next/**", ".remotion/**", "node_modules/**", "public/renders/**", "public/assets/generated/**"],
   },
 ];
 

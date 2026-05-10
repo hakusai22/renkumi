@@ -406,21 +406,18 @@ a {
 
 .template-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(188px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 12px;
-  max-height: 448px;
-  overflow: auto;
-  padding-right: 4px;
 }
 
 .template-panel.compact .template-grid {
-  max-height: 312px;
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
 }
 
 .template-card {
   display: grid;
-  gap: 12px;
-  min-height: 160px;
+  gap: 10px;
+  min-height: 136px;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px;
@@ -450,6 +447,23 @@ a {
   gap: 4px;
 }
 
+.template-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.template-card-badges span {
+  border: 1px solid rgba(20, 35, 38, 0.1);
+  border-radius: 999px;
+  padding: 4px 7px;
+  background: rgba(20, 35, 38, 0.04);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .template-card-top strong {
   color: var(--ink);
   font-size: 16px;
@@ -466,11 +480,10 @@ a {
 
 .template-card p {
   display: -webkit-box;
-  min-height: 54px;
   overflow: hidden;
   margin: 0;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   color: var(--muted);
   font-size: 13px;
   line-height: 1.38;
@@ -487,6 +500,74 @@ a {
   height: 22px;
   border: 1px solid rgba(20, 35, 38, 0.14);
   border-radius: 999px;
+}
+
+.template-more {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 2px;
+}
+
+.template-more summary {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  list-style: none;
+}
+
+.template-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.template-more summary strong {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.template-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 8px;
+  max-height: 212px;
+  overflow: auto;
+  padding: 2px 4px 2px 0;
+}
+
+.template-chip {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.template-chip.active {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px rgba(20, 35, 38, 0.08);
+}
+
+.template-chip strong {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.template-chip .template-swatches span {
+  width: 14px;
+  height: 14px;
 }
 
 .progress-track {
@@ -3392,6 +3473,13 @@ a {
   overflow: hidden;
 }
 
+.generate-shell .template-panel .section-heading .pill {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .generate-shell .render-engine-options {
   gap: 8px;
 }
@@ -3411,20 +3499,17 @@ a {
 }
 
 .generate-shell .template-grid {
-  grid-template-columns: repeat(auto-fit, minmax(172px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
-  max-height: 398px;
-  padding: 2px 4px 2px 2px;
-  scrollbar-color: rgba(91, 61, 241, 0.28) transparent;
+  padding: 2px;
 }
 
 .generate-shell .template-panel.compact .template-grid {
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  max-height: 340px;
+  grid-template-columns: repeat(auto-fit, minmax(176px, 1fr));
 }
 
 .generate-shell .template-card {
-  min-height: 150px;
+  min-height: 136px;
   border-color: var(--generate-line);
   padding: 15px;
   background:
@@ -3447,8 +3532,20 @@ a {
     0 18px 32px rgba(91, 61, 241, 0.08);
 }
 
+.generate-shell .template-card-badges span {
+  border-color: rgba(91, 61, 241, 0.13);
+  background: rgba(91, 61, 241, 0.06);
+  color: var(--generate-muted);
+}
+
+.generate-shell .template-card.active .template-card-badges span:first-child {
+  border-color: rgba(91, 61, 241, 0.28);
+  background: rgba(91, 61, 241, 0.12);
+  color: #4b32c8;
+}
+
 .generate-shell .template-card-top strong {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.28;
 }
 
@@ -3459,9 +3556,8 @@ a {
 }
 
 .generate-shell .template-card p {
-  min-height: 54px;
   color: var(--generate-body);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.48;
 }
 
@@ -3473,6 +3569,36 @@ a {
   width: 20px;
   height: 20px;
   border-color: rgba(31, 41, 55, 0.12);
+}
+
+.generate-shell .template-more {
+  border-top-color: var(--generate-soft-line);
+}
+
+.generate-shell .template-more summary {
+  color: var(--generate-ink);
+}
+
+.generate-shell .template-more summary strong {
+  color: var(--generate-muted);
+}
+
+.generate-shell .template-chip-grid {
+  scrollbar-color: rgba(91, 61, 241, 0.28) transparent;
+}
+
+.generate-shell .template-chip {
+  border-color: var(--generate-line);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.generate-shell .template-chip:hover {
+  border-color: rgba(91, 61, 241, 0.28);
+}
+
+.generate-shell .template-chip.active {
+  border-color: rgba(91, 61, 241, 0.68);
+  box-shadow: 0 0 0 1px rgba(91, 61, 241, 0.16);
 }
 
 .generate-shell .skill-chip-list {
@@ -3565,7 +3691,7 @@ a {
   }
 
   .generate-shell .template-grid {
-    grid-template-columns: repeat(auto-fit, minmax(184px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
 }
 

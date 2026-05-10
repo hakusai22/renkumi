@@ -116,6 +116,51 @@ const defaultRemotionSkillName = "remotion-best-practices";
 const defaultDesignId = "vercel";
 const defaultRenderEngine: RenderEngine = "remotion";
 
+const templateRecommendations = [
+  {
+    id: "vercel",
+    badge: "默认推荐",
+    fit: "SaaS / AI",
+    summary: "干净、现代，适合功能型产品说明。",
+  },
+  {
+    id: "linear.app",
+    badge: "专业工具",
+    fit: "效率软件",
+    summary: "冷静、克制，适合 B2B 和工作流产品。",
+  },
+  {
+    id: "apple",
+    badge: "高端质感",
+    fit: "产品发布",
+    summary: "留白强，适合强调质感和关键卖点。",
+  },
+  {
+    id: "stripe",
+    badge: "商业可信",
+    fit: "金融 / 数据",
+    summary: "轻盈但可信，适合数据、支付和平台型产品。",
+  },
+  {
+    id: "notion",
+    badge: "清楚亲和",
+    fit: "教育 / 内容",
+    summary: "信息友好，适合知识、文档和学习工具。",
+  },
+  {
+    id: "shopify",
+    badge: "转化导向",
+    fit: "电商 / 商品",
+    summary: "更有销售感，适合商品和店铺展示。",
+  },
+  {
+    id: "runwayml",
+    badge: "视觉冲击",
+    fit: "创意 / 影像",
+    summary: "更像发布会短片，适合强视觉产品。",
+  },
+] as const;
+
 const renderEngineOptions: Array<{
   id: RenderEngine;
   label: string;
@@ -149,6 +194,31 @@ async function readJsonPayload<Payload>(response: Response): Promise<Payload> {
 
 const formatRenderCreateError = (payload: RenderCreatePayload, fallback: string) =>
   [payload.error ?? fallback, payload.detail].filter(Boolean).join(" ");
+
+const renderProgressStageLabels: Record<string, string> = {
+  queued: "排队中",
+  bundling: "准备环境",
+  rendering: "渲染中",
+  encoding: "编码中",
+  muxing: "封装中",
+  done: "完成",
+};
+
+const formatRenderProgressDetail = (progress?: RenderProgress) => {
+  if (!progress) {
+    return "";
+  }
+
+  if (
+    ["rendering", "encoding", "muxing", "done"].includes(progress.stage) &&
+    (progress.renderedFrames > 0 || progress.encodedFrames > 0 || progress.stage === "done")
+  ) {
+    return `${progress.renderedFrames} rendered / ${progress.encodedFrames} encoded`;
+  }
+
+  const label = renderProgressStageLabels[progress.stage] ?? progress.stage;
+  return `${Math.max(0, Math.round(progress.percent))}% · ${label}`;
+};
 
 type SessionDraft = {
   brief?: string;
@@ -412,7 +482,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
 
   const pollRender = useCallback((id: string) => {
     window.setTimeout(async () => {
-      const response = await fetch(`/api/render/status?id=${id}`).catch(() => null);
+      const response = await fetch(`/api/render/status?id=${id}`, { cache: "no-store" }).catch(() => null);
 
       if (!response?.ok) {
         setRenderStatus("暂时无法获取渲染状态，稍后自动重试...");
@@ -502,7 +572,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
 
     const restoreRender = async (id?: string, fallbackUrl = "/api/render/latest") => {
       const url = id ? `/api/render/status?id=${id}` : fallbackUrl;
-      const response = await fetch(url).catch(() => null);
+      const response = await fetch(url, { cache: "no-store" }).catch(() => null);
 
       if (!response?.ok) {
         return;
@@ -983,11 +1053,11 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
       posterUrl: payload.posterUrl,
       error: payload.error,
       progress: {
-        percent: 0,
-        renderedFrames: 0,
-        encodedFrames: 0,
-        stage: "queued",
-        message: "等待开始",
+        percent: payload.progress?.percent ?? 1,
+        renderedFrames: payload.progress?.renderedFrames ?? 0,
+        encodedFrames: payload.progress?.encodedFrames ?? 0,
+        stage: payload.progress?.stage ?? "bundling",
+        message: payload.progress?.message ?? "任务已创建，正在启动渲染环境",
       },
     };
     setLatestRender(queuedRender);
@@ -1422,7 +1492,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
                     </div>
                     <div className="progress-meta">
                       <span>{renderStatus || "等待生成"}</span>
-                      <span>{progress ? `${progress.renderedFrames} rendered / ${progress.encodedFrames} encoded` : ""}</span>
+                      <span>{formatRenderProgressDetail(progress)}</span>
                     </div>
                   </div>
                 ) : null}
@@ -1700,47 +1770,104 @@ function TemplatePicker({
   compact?: boolean;
   onSelect: (designId: string) => void;
 }) {
-  const visibleDesigns = compact ? designLibrary.slice(0, 18) : designLibrary;
+  const selectedDesign = activeId ? designLibrary.find((design) => design.id === activeId) : undefined;
+  const recommendedIds = new Set<string>(templateRecommendations.map((template) => template.id));
+  const recommendedOptions = [
+    {
+      id: "",
+      name: "AI 自动推荐",
+      badge: "不确定选它",
+      fit: "自动匹配",
+      summary: "根据描述和截图自动选择最合适的设计方向。",
+      colors: ["#103D4A", "#F4C95D", "#E65A4F"],
+    },
+    ...templateRecommendations.flatMap((template) => {
+      const design = designLibrary.find((item) => item.id === template.id);
+
+      return design
+        ? [
+            {
+              id: design.id,
+              name: design.name,
+              badge: template.badge,
+              fit: template.fit,
+              summary: template.summary,
+              colors: design.colors,
+            },
+          ]
+        : [];
+    }),
+  ];
+  const selectedOption =
+    activeId && selectedDesign && !recommendedIds.has(activeId)
+      ? {
+          id: selectedDesign.id,
+          name: selectedDesign.name,
+          badge: "当前选择",
+          fit: "已选风格",
+          summary: "当前草稿正在使用这个品牌风格。",
+          colors: selectedDesign.colors,
+        }
+      : null;
+  const primaryOptions = selectedOption
+    ? [recommendedOptions[0], selectedOption, ...recommendedOptions.slice(1)]
+    : recommendedOptions;
+  const visibleOptions = compact ? primaryOptions.slice(0, 5) : primaryOptions;
+  const moreDesigns = designLibrary.filter(
+    (design) => !recommendedIds.has(design.id) && design.id !== selectedOption?.id,
+  );
+  const selectedLabel = activeId ? selectedDesign?.name ?? "已选择" : "AI 推荐";
 
   return (
     <section className={compact ? "template-panel compact" : "template-panel"}>
       <div className="section-heading">
         <div>
           <p className="eyebrow">Design templates</p>
-          <h2>选择视频视觉模板</h2>
+          <h2>选择视觉风格</h2>
         </div>
-        <span className="pill">{designLibrary.length} 套</span>
+        <span className="pill">{selectedLabel}</span>
       </div>
       <div className="template-grid">
-        <button
-          className={!activeId ? "template-card active" : "template-card"}
-          type="button"
-          onClick={() => onSelect("")}
-        >
-          <div className="template-card-top">
-            <strong>AI 自动推荐</strong>
-            <span>Auto</span>
-          </div>
-          <p>根据描述、图片和素材内容自动选择最贴近的设计语言。</p>
-          <ColorSwatches colors={["#103D4A", "#F4C95D", "#E65A4F"]} />
-        </button>
-
-        {visibleDesigns.map((design) => (
+        {visibleOptions.map((option) => (
           <button
-            className={activeId === design.id ? "template-card active" : "template-card"}
+            className={activeId === option.id ? "template-card active" : "template-card"}
             type="button"
-            key={design.id}
-            onClick={() => onSelect(design.id)}
+            key={option.id || "auto"}
+            onClick={() => onSelect(option.id)}
           >
-            <div className="template-card-top">
-              <strong>{design.name}</strong>
-              <span>{design.id}</span>
+            <div className="template-card-badges">
+              <span>{option.badge}</span>
+              <span>{option.fit}</span>
             </div>
-            <p>{design.summary}</p>
-            <ColorSwatches colors={design.colors} />
+            <div className="template-card-top">
+              <strong>{option.name}</strong>
+            </div>
+            <p>{option.summary}</p>
+            <ColorSwatches colors={option.colors} />
           </button>
         ))}
       </div>
+      {!compact ? (
+        <details className="template-more">
+          <summary>
+            <span>更多品牌风格</span>
+            <strong>{moreDesigns.length} 套</strong>
+          </summary>
+          <div className="template-chip-grid">
+            {moreDesigns.map((design) => (
+              <button
+                className={activeId === design.id ? "template-chip active" : "template-chip"}
+                type="button"
+                key={design.id}
+                onClick={() => onSelect(design.id)}
+              >
+                <strong>{design.name}</strong>
+                <ColorSwatches colors={design.colors} />
+              </button>
+            ))}
+          </div>
+        </details>
+      ) : null}
     </section>
   );
 }
