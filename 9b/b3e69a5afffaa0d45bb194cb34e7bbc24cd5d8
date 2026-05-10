@@ -1,0 +1,26 @@
+app/globals.css
+  s_b6ed8cd721eda0::t_fc8b02a6d933fb 1399
+app/home/page.tsx
+  s_b6ed8cd721eda0::t_328130a1a80f81 141,326
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "9bb3e69a5afffaa0d45bb194cb34e7bbc24cd5d8",
+  "prompts": {},
+  "humans": {
+    "h_b4d8471e2ec6a0": {
+      "author": "hakusai"
+    }
+  },
+  "sessions": {
+    "s_b6ed8cd721eda0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e1145-e050-7813-82bd-a54df557ec4e",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai <hakusai22@qq.com>"
+    }
+  }
+}
