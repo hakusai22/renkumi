@@ -1,0 +1,45 @@
+package.json
+  s_8b80616c39c5b7::t_b02e38bf34da10 7,17-18
+lib/render-store.ts
+  s_8b80616c39c5b7::t_ac93a52493e2ae 80-81,107
+  s_8b80616c39c5b7::t_183417b19c256d 23-27,39-47,61-62,70,72,74-76,96-103,112-113,149-164,166-169,188,202,209,217,220,225-230,232-235,258,269-272,279,308,343-347,368-495
+  s_8b80616c39c5b7::t_2f0013afb8aadf 78
+scripts/render-worker.ts
+  s_8b80616c39c5b7::t_91b995f6befd22 3,202-206
+  s_8b80616c39c5b7::t_a5348d6ae5a4bf 58,99,108
+  s_8b80616c39c5b7::t_1be1134175adea 1-2,4-11,15-57,59-98,100-107,109-122,136,140-201,207-215,217
+app/api/render/health/route.ts
+  s_8b80616c39c5b7::t_dd3e844ce32a5d 1-4,6-15,18-20,23,25-36,39-41,43-63,65-67
+  s_8b80616c39c5b7::t_97d431a5226ae2 5,24
+README.md
+  s_8b80616c39c5b7::t_41fa9952e99557 14,34,74-77,82-91,103
+  s_8b80616c39c5b7::t_600d709ac22a0c 101
+app/api/render/route.ts
+  s_8b80616c39c5b7::t_faeba2c6d30efe 2,8,16,48-50,59,62-82,88,90-101,103,105-108
+  s_8b80616c39c5b7::t_af0c0774d388fd 7,83-87
+lib/render-renkumi-video.ts
+  s_8b80616c39c5b7::t_edaf24f10b222a 1,67
+tsconfig.tsbuildinfo
+  s_8b80616c39c5b7::t_6f12390e835b69 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "8e009c50076738e95dab1034e7dce9b98618ccf2",
+  "prompts": {},
+  "humans": {
+    "h_a1adbf7c51e263": {
+      "author": "hakusai <hakusai22@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_8b80616c39c5b7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e1265-1f8b-75c3-9566-0d193eafbf2c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai <hakusai22@qq.com>"
+    }
+  }
+}
