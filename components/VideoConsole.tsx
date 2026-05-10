@@ -59,6 +59,11 @@ type RenderSnapshot = {
   progress: RenderProgress;
 };
 
+type RenderCreatePayload = Partial<RenderSnapshot> & {
+  code?: string;
+  detail?: string;
+};
+
 type ScriptStreamPayload = {
   message?: string;
   token?: string;
@@ -127,6 +132,23 @@ const renderEngineOptions: Array<{
     description: "HTML composition，适合更轻的分镜和页面式动效。",
   },
 ];
+
+async function readJsonPayload<Payload>(response: Response): Promise<Payload> {
+  const text = await response.text().catch(() => "");
+
+  if (!text) {
+    return {} as Payload;
+  }
+
+  try {
+    return JSON.parse(text) as Payload;
+  } catch {
+    return { error: text } as Payload;
+  }
+}
+
+const formatRenderCreateError = (payload: RenderCreatePayload, fallback: string) =>
+  [payload.error ?? fallback, payload.detail].filter(Boolean).join(" ");
 
 type SessionDraft = {
   brief?: string;
@@ -932,18 +954,34 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ engine: renderEngine, spec }),
+    }).catch((error: unknown) => {
+      setRenderStatus(error instanceof Error ? error.message : "渲染请求发送失败");
+      setWorkflowStep("review");
+      return null;
     });
-    const payload = await response.json();
 
-    if (!response.ok) {
-      setRenderStatus(payload.error ?? "渲染任务创建失败");
+    if (!response) {
+      return;
+    }
+
+    const payload = await readJsonPayload<RenderCreatePayload>(response);
+
+    if (!response.ok || !payload.id) {
+      setRenderStatus(formatRenderCreateError(payload, "渲染任务创建失败"));
       setWorkflowStep("review");
       return;
     }
 
-    const queuedRender = {
-      ...payload,
+    const queuedRender: RenderSnapshot = {
+      id: payload.id,
       engine: payload.engine ?? renderEngine,
+      status: payload.status ?? "queued",
+      statusUrl: payload.statusUrl,
+      pageUrl: payload.pageUrl,
+      outputUrl: payload.outputUrl,
+      compositionUrl: payload.compositionUrl,
+      posterUrl: payload.posterUrl,
+      error: payload.error,
       progress: {
         percent: 0,
         renderedFrames: 0,
@@ -951,7 +989,7 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
         stage: "queued",
         message: "等待开始",
       },
-    } satisfies RenderSnapshot;
+    };
     setLatestRender(queuedRender);
     upsertBrowserRecord(queuedRender);
     persistSessionDraft({
@@ -1412,6 +1450,9 @@ export function VideoConsole({ initialSpec, workflowRoute = "storyboard" }: Vide
                 </Link>
               </div>
               {latestRender?.error ? <div className="status-box">{latestRender.error}</div> : null}
+              {!latestRender?.error && workflowStep !== "rendering" && renderStatus ? (
+                <div className="status-box">{renderStatus}</div>
+              ) : null}
             </section>
           </>
         ) : null}

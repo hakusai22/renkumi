@@ -977,6 +977,10 @@ a {
   line-height: 1.45;
 }
 
+.render-submit-bar > .status-box {
+  grid-column: 1 / -1;
+}
+
 .render-submit-actions {
   display: flex;
   align-items: center;
