@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "pnpm remotion:bundle && next build",
+    "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
@@ -14,17 +14,16 @@
     "remotion:render": "tsx scripts/render-worker.ts",
     "hyperframes:render": "tsx scripts/render-worker.ts sample hyperframes",
     "hyperframes:storyboard": "python3 scripts/render-hyperframes-storyboard.py",
-    "render:sample": "tsx scripts/render-worker.ts sample"
+    "render:sample": "tsx scripts/render-worker.ts sample",
+    "worker:render": "tsx scripts/render-worker.ts --loop"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.426",
     "@remotion/cli": "4.0.426",
     "@remotion/player": "4.0.426",
     "@remotion/renderer": "4.0.426",
-    "@remotion/vercel": "4.0.426",
     "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.3.3",
-    "@vercel/sandbox": "^1.10.1",
     "next": "^15.0.0",
     "openai": "^5.0.0",
     "react": "^19.0.0",

@@ -12,4 +12,3 @@ public/assets/generated/*
 !public/assets/generated/readme-*.png
 public/assets/uploads/*
 !.gitkeep
-/.env.example

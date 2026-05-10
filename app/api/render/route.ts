@@ -1,10 +1,11 @@
 import { spawn } from "node:child_process";
-import { after, NextResponse } from "next/server";
-import { renderRenkumiVideoOnVercel } from "@/lib/render-renkumi-video-vercel";
+import { NextResponse } from "next/server";
 import {
   createRenderTask,
   defaultRenderEngine,
   getHostedRenderConfigError,
+  getRenderStoreConfigError,
+  isBlobRenderStoreEnabled,
   isHostedRenderRuntime,
   updateRenderTask,
   type RenderEngine,
@@ -12,7 +13,7 @@ import {
 import { defaultVideoSpec, type VideoSpec } from "@/lib/video-spec";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+export const maxDuration = 10;
 
 type RenderBody = {
   engine?: RenderEngine;
@@ -44,9 +45,9 @@ export async function POST(request: Request) {
     if (engine !== "remotion") {
       return NextResponse.json(
         {
-          code: "RENDER_ENGINE_UNAVAILABLE_ON_VERCEL",
-          error: "当前 Vercel 部署环境仅支持 Remotion Sandbox 渲染。",
-          detail: "HyperFrames 仍需要本地 worker/浏览器/文件系统路径，请在本地运行或接入独立 worker。",
+          code: "RENDER_ENGINE_UNAVAILABLE_IN_HOSTED_QUEUE",
+          error: "当前部署环境仅支持 Remotion 队列渲染。",
+          detail: "HyperFrames 仍需要本地浏览器、Python 和 ffmpeg，请在本地运行。",
           engine,
         },
         { status: 501 },
@@ -55,33 +56,56 @@ export async function POST(request: Request) {
 
     const configError = getHostedRenderConfigError();
     if (configError) {
-      return NextResponse.json({ ...configError, engine }, { status: 501 });
+      return NextResponse.json({ ...configError, engine }, { status: 503 });
+    }
+
+    try {
+      const task = await createRenderTask(body.spec ?? defaultVideoSpec, engine);
+      return NextResponse.json({
+        id: task.id,
+        engine: task.engine,
+        status: task.status,
+        progress: task.progress,
+        statusUrl: `/api/render/status?id=${task.id}`,
+        pageUrl: `/renders/${task.id}`,
+      });
+    } catch (error) {
+      return NextResponse.json(
+        {
+          code: "RENDER_TASK_QUEUE_FAILED",
+          error: "渲染任务创建失败。",
+          detail: error instanceof Error ? error.message : String(error),
+          engine,
+        },
+        { status: 503 },
+      );
+    }
+  }
+
+  const storeConfigError = getRenderStoreConfigError();
+  if (storeConfigError) {
+    return NextResponse.json({ ...storeConfigError, engine }, { status: 503 });
+  }
+
+  if (isBlobRenderStoreEnabled()) {
+    if (engine !== "remotion") {
+      return NextResponse.json(
+        {
+          code: "RENDER_ENGINE_UNAVAILABLE_IN_HOSTED_QUEUE",
+          error: "Blob 队列模式仅支持 Remotion 渲染。",
+          detail: "HyperFrames 请使用本地文件系统模式运行。",
+          engine,
+        },
+        { status: 501 },
+      );
     }
 
     const task = await createRenderTask(body.spec ?? defaultVideoSpec, engine);
-    const startedTask = await updateRenderTask(task.id, {
-      status: "rendering",
-      progress: {
-        percent: 1,
-        renderedFrames: 0,
-        encodedFrames: 0,
-        stage: "bundling",
-        message: "任务已创建，正在启动 Vercel Sandbox",
-      },
-    });
-
-    after(
-      renderRenkumiVideoOnVercel(task.id).catch((error: unknown) => {
-        void failRenderTask(task.id, error instanceof Error ? error.message : String(error));
-        console.error(error);
-      }),
-    );
-
     return NextResponse.json({
-      id: startedTask.id,
-      engine: startedTask.engine,
-      status: startedTask.status,
-      progress: startedTask.progress,
+      id: task.id,
+      engine: task.engine,
+      status: task.status,
+      progress: task.progress,
       statusUrl: `/api/render/status?id=${task.id}`,
       pageUrl: `/renders/${task.id}`,
     });

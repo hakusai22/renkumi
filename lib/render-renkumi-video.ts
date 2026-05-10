@@ -1,3 +1,4 @@
+import { promises as fs } from "node:fs";
 import path from "node:path";
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
@@ -63,6 +64,7 @@ export async function renderRenkumiVideo(id: string) {
       inputProps: { spec: task.spec },
     });
     const outputLocation = getRenderOutputPath(id);
+    await fs.mkdir(path.dirname(outputLocation), { recursive: true });
     let lastProgressWrite = 0;
     type RenderMediaProgress = Parameters<NonNullable<Parameters<typeof renderMedia>[0]["onProgress"]>>[0];
 
