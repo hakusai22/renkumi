@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -139,9 +138,7 @@ export default function ProductHomePage() {
     <main className="marketing-shell">
       <nav className="marketing-nav" aria-label="产品导航">
         <Link className="marketing-brand" href="/">
-          <span className="marketing-mark">
-            <Image src="/assets/renkumi-icon.png" alt="" width={38} height={38} unoptimized />
-          </span>
+          <span className="marketing-mark">レン</span>
           <span>Renkumi</span>
         </Link>
         <div className="marketing-links">
@@ -326,9 +323,7 @@ export default function ProductHomePage() {
         <div className="marketing-container footer-grid">
           <div className="footer-brand">
             <Link className="marketing-brand" href="/">
-              <span className="marketing-mark">
-                <Image src="/assets/renkumi-icon.png" alt="" width={38} height={38} unoptimized />
-              </span>
+              <span className="marketing-mark">レン</span>
               <span>Renkumi</span>
             </Link>
             <p>AI 驱动的产品视频生成平台，帮你快速将产品想法转化为高质量视频。</p>
