@@ -1,0 +1,64 @@
+app/globals.css
+  s_fd10c228dfeebd::t_00698367253602 2538,2628,2630-2635,2638-2643,2646-2652,2655-2657
+  s_fd10c228dfeebd::t_6d769c165c0397 177,180-185,188,191-192,195,197-205,208-209,215-229
+  s_fd10c228dfeebd::t_57e2d9ed653b87 2752,2780,2785-2820,2824-2854
+  s_fd10c228dfeebd::t_2e46bc8e82d839 3289,3293,3295,3298,3301-3303
+  s_fd10c228dfeebd::t_c792ed14227c1d 3266-3269
+  s_fd10c228dfeebd::t_d3e01df5122752 3329-3330
+  s_fd10c228dfeebd::t_d8ecb71ed483ee 2739-2743,2745,2750-2751,2753-2756,2770-2774,2779,2781,2821-2823,2855-2864,2881-2888,2995-3098
+app/renders/[id]/page.tsx
+  s_fd10c228dfeebd::t_ce05cfe3aeba35 46
+components/VideoConsole.tsx
+  s_fd10c228dfeebd::t_366d791b0061cb 662,673,688,755,770,779,805,816,821
+  s_fd10c228dfeebd::t_0d4663d47583db 883,903,912-921,924
+  s_fd10c228dfeebd::t_2e3b2a83a78385 249,292-295
+  s_fd10c228dfeebd::t_7314f4ba68a535 25,30-31,34,37,929,1010-1013,1016-1018,1020-1022,1026
+  s_fd10c228dfeebd::t_cb5cf124556189 493-503,506,509,523
+  s_fd10c228dfeebd::t_60594d31f64ba8 991
+  s_fd10c228dfeebd::t_91b1d9b3868e19 1015,1019,1023,1028,1030-1032,1036
+  s_fd10c228dfeebd::t_326c361f38e99e 928
+  s_fd10c228dfeebd::t_9546b8143733a0 19,22,26-29,32-33,35-36
+  s_fd10c228dfeebd::t_10af5b44ba81a7 1055,1079,1087,1134
+  s_fd10c228dfeebd::t_19dccfcd64d74e 1357,1406
+  s_fd10c228dfeebd::t_cc95978181d3ae 1309-1314
+  s_fd10c228dfeebd::t_037f8b294e6593 1276,1328
+  s_fd10c228dfeebd::t_9774f7a44004e5 1072
+  s_fd10c228dfeebd::t_fd4859912ac7e1 247,824,834
+  s_fd10c228dfeebd::t_d0b2b8c8e17d0d 343,355-361
+  s_fd10c228dfeebd::t_cd88fa8c2e782e 1277-1308,1315-1317,1319
+app/generate/ai-plan/page.tsx
+  s_fd10c228dfeebd::t_412fd2179a97b4 1-6
+app/studio/page.tsx
+  s_fd10c228dfeebd::t_d2624988854d9f 1,10
+app/generate/render/page.tsx
+  s_fd10c228dfeebd::t_412fd2179a97b4 1-6
+app/home/page.tsx
+  s_fd10c228dfeebd::t_7fdea34ef546e7 147-148,174,178,316,319
+app/generate/input/page.tsx
+  s_fd10c228dfeebd::t_412fd2179a97b4 1-6
+app/generate/page.tsx
+  s_fd10c228dfeebd::t_412fd2179a97b4 1,4
+app/generate/storyboard/page.tsx
+  s_fd10c228dfeebd::t_412fd2179a97b4 1-6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "fabe66805559be726d948d6f98343484ac68aa6f",
+  "prompts": {},
+  "humans": {
+    "h_b4d8471e2ec6a0": {
+      "author": "hakusai"
+    }
+  },
+  "sessions": {
+    "s_fd10c228dfeebd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e116d-a546-79c3-a2bf-371cbdc56c9b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai <hakusai22@qq.com>"
+    }
+  }
+}
