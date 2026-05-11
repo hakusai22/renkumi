@@ -1,0 +1,25 @@
+lib/render-renkumi-video.ts
+  s_5ed99d271ed0fa::t_e9376dde152540 53-54
+  s_5ed99d271ed0fa::t_f03214f9020ee6 36-52,55-67,76-77,91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "2bcda6bad4fdab3f558dbb2eac59d71578245a36",
+  "prompts": {},
+  "humans": {
+    "h_a1adbf7c51e263": {
+      "author": "hakusai <hakusai22@qq.com>"
+    }
+  },
+  "sessions": {
+    "s_5ed99d271ed0fa": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e1299-8e65-7f01-9dac-d1ff373e62ac",
+        "model": "gpt-5.5"
+      },
+      "human_author": "hakusai <hakusai22@qq.com>"
+    }
+  }
+}
