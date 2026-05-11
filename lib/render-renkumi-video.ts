@@ -33,6 +33,38 @@ const getRemotionBrowserCacheDir = () => {
   return isHostedRenderRuntime() ? path.join(os.tmpdir(), "renkumi", "remotion-browser") : null;
 };
 
+const getRemotionRendererPackageDirFromPath = (filePath: string) => {
+  const marker = `${path.sep}node_modules${path.sep}@remotion${path.sep}renderer${path.sep}`;
+  const markerIndex = filePath.lastIndexOf(marker);
+  if (markerIndex === -1) {
+    return null;
+  }
+
+  return filePath.slice(0, markerIndex + marker.length - 1);
+};
+
+const getRemotionRendererPackageDir = (runtimeRequire: NodeJS.Require) => {
+  const resolvedEntry = runtimeRequire.resolve("@remotion/renderer");
+  const packageDirFromEntry = getRemotionRendererPackageDirFromPath(resolvedEntry);
+  if (packageDirFromEntry) {
+    return packageDirFromEntry;
+  }
+
+  for (const cachedModule of Object.values(runtimeRequire.cache)) {
+    const filename = cachedModule?.filename;
+    if (!filename) {
+      continue;
+    }
+
+    const packageDirFromCache = getRemotionRendererPackageDirFromPath(filename);
+    if (packageDirFromCache) {
+      return packageDirFromCache;
+    }
+  }
+
+  throw new Error(`Cannot locate @remotion/renderer package directory from ${resolvedEntry}`);
+};
+
 const patchRemotionBrowserCacheDir = () => {
   const cacheDir = getRemotionBrowserCacheDir();
   if (!cacheDir) {
@@ -41,8 +73,8 @@ const patchRemotionBrowserCacheDir = () => {
 
   try {
     const runtimeRequire = getRuntimeRequire();
-    const packageJsonPath = runtimeRequire.resolve("@remotion/renderer/package.json");
-    const modulePath = path.join(path.dirname(packageJsonPath), "dist", "browser", "get-download-destination.js");
+    const packageDir = getRemotionRendererPackageDir(runtimeRequire);
+    const modulePath = path.join(packageDir, "dist", "browser", "get-download-destination.js");
     const downloadDestination = runtimeRequire(modulePath) as { getDownloadsCacheDir: () => string };
     downloadDestination.getDownloadsCacheDir = () => cacheDir;
   } catch (error) {
@@ -54,9 +86,9 @@ const patchRemotionBrowserCacheDir = () => {
   }
 };
 
-patchRemotionBrowserCacheDir();
-
 const { renderMedia, selectComposition } = nodeRequire("@remotion/renderer") as typeof import("@remotion/renderer");
+
+patchRemotionBrowserCacheDir();
 
 const getBundledServeUrl = () => {
   bundledServeUrlPromise ??= bundle({
