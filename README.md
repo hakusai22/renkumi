@@ -100,7 +100,7 @@ BLOB_READ_WRITE_TOKEN=...
 RENDER_EXECUTION_MODE=vercel-background
 ```
 
-私有 Blob 视频通过 `/api/render/output?id=...` 读取，`/api/render/health` 可检查 Blob 读写和渲染执行器状态。Remotion 浏览器缓存在线上默认写入 `/tmp/renkumi/remotion-browser`，通常不需要手动设置 `REMOTION_BROWSER_CACHE_DIR`。
+私有 Blob 视频通过 `/api/render/output?id=...` 读取，`/api/render/health` 可检查 Blob 读写和渲染执行器状态。Remotion 线上运行目录默认是 `/tmp/renkumi/remotion-browser`，浏览器文件会写入该目录下的 `node_modules/.remotion`，通常不需要手动设置 `REMOTION_BROWSER_CACHE_DIR`。
 
 ### 方案 A：只部署当前 Vercel 项目
 
